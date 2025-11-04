@@ -1,16 +1,17 @@
-# This is a sample Python script.
+from permissions_manager import PermissionManager
 
-# Press Shift+F10 to execute it or replace it with your code.
-# Press Double Shift to search everywhere for classes, files, tool windows, actions, and settings.
+def start_trip_recording():
+    print("Trip recording started successfully! 🚗💨")
 
+def main():
+    print("=== Trip Start: Permission Check ===")
+    pm = PermissionManager()
+    pm.request_permissions()
 
-def print_hi(name):
-    # Use a breakpoint in the code line below to debug your script.
-    print(f'Hi, {name}')  # Press Ctrl+F8 to toggle the breakpoint.
+    if pm.validate_permissions():
+        start_trip_recording()
+    else:
+        print("Trip cannot start without required permissions ❌")
 
-
-# Press the green button in the gutter to run the script.
-if __name__ == '__main__':
-    print_hi('PyCharm')
-
-# See PyCharm help at https://www.jetbrains.com/help/pycharm/
+if __name__ == "__main__":
+    main()
