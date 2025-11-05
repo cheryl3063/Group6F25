@@ -20,7 +20,7 @@ import pandas as pd
 try:
     from sensors_listeners import SensorListener  # if file is sensors_listeners.py
 except Exception:
-    from Sensor_listener import SensorListener    # fallback to Sensor_listener.py (as provided)
+    from sensors_listeners import SensorListener    # fallback to Sensor_listener.py (as provided)
 
 # -----------------------
 # Helpers
@@ -233,3 +233,4 @@ else:
     st.caption("Waiting for accelerometer updates…")
 
 st.caption("This UI uses your existing SensorListener and parses its logs in real time (no code changes to teammates' files).")
+
