@@ -11,15 +11,15 @@ from kivy.uix.popup import Popup
 from kivy.uix.screenmanager import ScreenManager, Screen, FadeTransition
 from kivy.core.text import LabelBase
 
-# 🧩 Local project imports
+# Import other project modules
 import main
-from analytics_screen import AnalyticsScreen  # ✅ make sure this file exists in the same folder
+from analytics_screen import AnalyticsScreen
+from trip_screen import TripRecordingScreen  # ✅ Added new telemetry screen
 
-# Register emoji-friendly font
+# Register emoji font
 LabelBase.register(name="EmojiFont", fn_regular="C:\\Windows\\Fonts\\seguiemj.ttf")
 
 API_URL = "http://127.0.0.1:5000/login"
-
 
 # -------------------------------------------------------------------
 # LOGIN SCREEN
@@ -51,8 +51,8 @@ class LoginScreen(Screen):
         if not email or not password:
             self.show_popup("Error", "Please enter both email and password.")
             return
-        if "@" not in email or "." not in email:
-            self.show_popup("Error", "Invalid email format.")
+        if not email.endswith("@gmail.com"):
+            self.show_popup("Error", "Please enter a valid Gmail address ending with '@gmail.com'.")
             return
 
         try:
@@ -76,7 +76,6 @@ class LoginScreen(Screen):
             size_hint=(0.75, 0.35)
         ).open()
 
-
 # -------------------------------------------------------------------
 # DASHBOARD SCREEN
 # -------------------------------------------------------------------
@@ -88,7 +87,7 @@ class DashboardScreen(Screen):
         self.layout.add_widget(self.label)
 
         btn_trip = Button(text="🚗 Start Trip Recording", size_hint_y=None, height=45, font_name="EmojiFont")
-        btn_trip.bind(on_press=self.start_trip)
+        btn_trip.bind(on_press=lambda x: self.open_trip())
         self.layout.add_widget(btn_trip)
 
         btn_analytics = Button(text="📊 View Analytics", size_hint_y=None, height=45, font_name="EmojiFont")
@@ -104,36 +103,18 @@ class DashboardScreen(Screen):
     def set_user(self, email, uid):
         self.label.text = f"👋 Welcome, {email}!\nUser ID: {uid}"
 
-    def start_trip(self, instance):
-        try:
-            old_stdout = sys.stdout
-            sys.stdout = io.StringIO()
-            main.main()
-            result_output = sys.stdout.getvalue().strip()
-            sys.stdout = old_stdout
-
-            Popup(
-                title="Trip Recording",
-                content=Label(text=result_output, font_size=16, font_name="EmojiFont"),
-                size_hint=(0.75, 0.45)
-            ).open()
-        except Exception as e:
-            sys.stdout = old_stdout
-            Popup(
-                title="Error",
-                content=Label(text=f"Failed to start trip: {e}", font_size=16, font_name="EmojiFont"),
-                size_hint=(0.75, 0.35)
-            ).open()
+    def open_trip(self):
+        """Navigate to the live telemetry screen"""
+        self.manager.transition.direction = "left"
+        self.manager.current = "trip"
 
     def open_analytics(self, instance):
-        """Switch to the Analytics screen"""
         self.manager.transition.direction = "left"
         self.manager.current = "analytics"
 
     def logout(self, instance):
         self.manager.transition.direction = "right"
         self.manager.current = "login"
-
 
 # -------------------------------------------------------------------
 # MAIN APP CONTROLLER
@@ -143,9 +124,9 @@ class DriverApp(App):
         sm = ScreenManager(transition=FadeTransition())
         sm.add_widget(LoginScreen(name="login"))
         sm.add_widget(DashboardScreen(name="dashboard"))
-        sm.add_widget(AnalyticsScreen(name="analytics"))  # ✅ Added correctly
+        sm.add_widget(AnalyticsScreen(name="analytics"))
+        sm.add_widget(TripRecordingScreen(name="trip"))  # ✅ Added Telemetry UI
         return sm
-
 
 if __name__ == "__main__":
     DriverApp().run()
