@@ -27,21 +27,21 @@ class AnalyticsScreen(Screen):
             font_size=22,
             bold=True,
             color=(1, 1, 1, 1),
-            font_name="EmojiFont",
+            #font_name="EmojiFont",
         )
         self.layout.add_widget(self.title)
 
         self.avg_speed_label = Label(
             text="Average Speed: -- km/h",
-            font_size=16, color=(1, 1, 1, 1), font_name="EmojiFont"
+            font_size=16, color=(1, 1, 1, 1), #font_name="EmojiFont"
         )
         self.distance_label = Label(
             text="Distance Travelled: -- km",
-            font_size=16, color=(1, 1, 1, 1), font_name="EmojiFont"
+            font_size=16, color=(1, 1, 1, 1), #font_name="EmojiFont"
         )
         self.score_label = Label(
             text="Driver Score: --/100",
-            font_size=16, color=(1, 1, 1, 1), font_name="EmojiFont"
+            font_size=16, color=(1, 1, 1, 1), #font_name="EmojiFont"
         )
 
         self.layout.add_widget(self.avg_speed_label)
@@ -57,21 +57,21 @@ class AnalyticsScreen(Screen):
             text="▶️ Start Live Simulation",
             font_size=16,
             background_color=(0.0, 0.3, 0.6, 1),
-            font_name="EmojiFont",
+            #font_name="EmojiFont",
             on_press=self.start_simulation,
         )
         self.stop_button = Button(
             text="🛑 Stop Simulation",
             font_size=16,
             background_color=(0.3, 0, 0, 1),
-            font_name="EmojiFont",
+            #font_name="EmojiFont",
             on_press=self.stop_simulation,
         )
         self.back_button = Button(
             text="⬅️ Back to Trip",
             font_size=16,
             background_color=(0.15, 0.15, 0.15, 1),
-            font_name="EmojiFont",
+            #font_name="EmojiFont",
             on_press=self.go_back,
         )
 
@@ -152,7 +152,7 @@ class AnalyticsScreen(Screen):
                       "Distance: 21.7 km\n"
                       "Driver Score: 92.7/100\n\n"
                       "Session Duration: ~30s ⏱️"),
-                font_name="EmojiFont",
+                #font_name="EmojiFont",
                 color=(1, 1, 1, 1),
             ),
             size_hint=(0.75, 0.55),
