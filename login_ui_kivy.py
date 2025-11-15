@@ -9,17 +9,14 @@ from kivy.uix.textinput import TextInput
 from kivy.uix.button import Button
 from kivy.uix.popup import Popup
 from kivy.uix.screenmanager import ScreenManager, Screen, FadeTransition
-from kivy.core.text import LabelBase
 
 # Import other project modules
 import main
 from analytics_screen import AnalyticsScreen
-from trip_screen import TripRecordingScreen  # ✅ Added new telemetry screen
+from trip_screen import TripRecordingScreen
 from trip_summary_screen import TripSummaryScreen
+from sensors_listeners import SensorListener
 
-
-# Register emoji font
-#LabelBase.register(name="EmojiFont", fn_regular="C:\\Windows\\Fonts\\seguiemj.ttf")
 
 API_URL = "http://127.0.0.1:5050/login"
 
@@ -54,12 +51,15 @@ class LoginScreen(Screen):
         if not email or not password:
             self.show_popup("Error", "Please enter both email and password.")
             return
+
+        # Gmail validation
         if not email.endswith("@gmail.com"):
             self.show_popup("Error", "Please enter a valid Gmail address ending with '@gmail.com'.")
             return
 
         try:
             resp = requests.post(API_URL, json={"email": email, "password": password}, timeout=10)
+
             if resp.status_code == 200:
                 data = resp.json()
                 uid = data.get("uid", "N/A")
@@ -69,6 +69,7 @@ class LoginScreen(Screen):
             else:
                 msg = resp.json().get("error") or resp.text
                 self.show_popup("Error", msg)
+
         except requests.exceptions.RequestException as e:
             self.show_popup("Error", f"Connection error: {e}")
 
@@ -79,6 +80,7 @@ class LoginScreen(Screen):
             size_hint=(0.75, 0.35)
         ).open()
 
+
 # -------------------------------------------------------------------
 # DASHBOARD SCREEN
 # -------------------------------------------------------------------
@@ -86,22 +88,25 @@ class DashboardScreen(Screen):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.layout = BoxLayout(orientation='vertical', padding=25, spacing=20)
-        self.label = Label(text="Welcome!", font_size=24,)
+        self.label = Label(text="Welcome!", font_size=24)
         self.layout.add_widget(self.label)
 
-        # Generate Trip Summary Button
+        # Trip Summary Button
         btn_summary = Button(text="🧾 Generate Trip Summary", size_hint_y=None, height=45)
         btn_summary.bind(on_press=self.open_trip_summary)
         self.layout.add_widget(btn_summary)
 
+        # Start Trip Button
         btn_trip = Button(text="🚗 Start Trip Recording", size_hint_y=None, height=45)
         btn_trip.bind(on_press=lambda x: self.open_trip())
         self.layout.add_widget(btn_trip)
 
+        # Analytics Button
         btn_analytics = Button(text="📊 View Analytics", size_hint_y=None, height=45)
         btn_analytics.bind(on_press=self.open_analytics)
         self.layout.add_widget(btn_analytics)
 
+        # Logout Button
         btn_logout = Button(text="🔒 Logout", size_hint_y=None, height=45)
         btn_logout.bind(on_press=self.logout)
         self.layout.add_widget(btn_logout)
@@ -112,7 +117,6 @@ class DashboardScreen(Screen):
         self.label.text = f"👋 Welcome, {email}!\nUser ID: {uid}"
 
     def open_trip(self):
-        """Navigate to the live telemetry screen"""
         self.manager.transition.direction = "left"
         self.manager.current = "trip"
 
@@ -125,7 +129,6 @@ class DashboardScreen(Screen):
         self.manager.current = "login"
 
     def open_trip_summary(self, *_):
-        from trip_summary_screen import TripSummaryScreen
         samples = [
             {"speed": 42.0, "brake_events": 0, "harsh_accel": 0, "distance_km": 1.2},
             {"speed": 55.0, "brake_events": 1, "harsh_accel": 0, "distance_km": 2.0},
@@ -141,16 +144,28 @@ class DashboardScreen(Screen):
 # MAIN APP CONTROLLER
 # -------------------------------------------------------------------
 class DriverApp(App):
+
     def build(self):
+        self.sensor_listener = SensorListener()  # ✅ Add sensor manager
+
         sm = ScreenManager(transition=FadeTransition())
         sm.add_widget(LoginScreen(name="login"))
         sm.add_widget(DashboardScreen(name="dashboard"))
         sm.add_widget(AnalyticsScreen(name="analytics"))
-        from trip_summary_screen import TripSummaryScreen
         sm.add_widget(TripSummaryScreen(name="trip_summary"))
-        sm.add_widget(TripRecordingScreen(name="trip"))  # ✅ Added Telemetry UI
+        sm.add_widget(TripRecordingScreen(name="trip"))  # Live telemetry screen
+
         return sm
+
+    # Called from TripRecordingScreen
+    def start_trip_recording(self):
+        print("DriverApp → Starting sensors...")
+        self.sensor_listener.start_listeners()
+
+    def stop_trip_recording(self):
+        print("DriverApp → Stopping sensors...")
+        self.sensor_listener.stop_listeners()
+
 
 if __name__ == "__main__":
     DriverApp().run()
-
