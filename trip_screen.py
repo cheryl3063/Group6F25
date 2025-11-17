@@ -2,6 +2,8 @@
 import random
 import time
 from threading import Thread
+import json
+import os
 
 from kivy.app import App
 from kivy.clock import Clock
@@ -62,6 +64,9 @@ class TripRecordingScreen(Screen):
         self._thread = None
         self.samples = []  # ⬅ stores telemetry for trip summary
 
+        # auto-save every 5 seconds
+        Clock.schedule_interval(self.auto_save,5)
+
     # ------------------------------------------------------
     # START BUTTON
     # ------------------------------------------------------
@@ -83,6 +88,10 @@ class TripRecordingScreen(Screen):
     def _stop_clicked(self, *_):
         self.running = False
         self.start_btn.text = "▶️ Start Trip"
+
+        # DELETE autosave file if it exists
+        if os.path.exists("autosave.json"):
+            os.remove("autosave.json")
 
         # Format samples for trip summary screen
         summary_samples = []
@@ -143,3 +152,34 @@ class TripRecordingScreen(Screen):
         self.accel_label.text = f"🪶 Accelerometer → X={ax}, Y={ay}, Z={az}"
         self.gyro_label.text = f"⚙️ Gyroscope → X={gx}, Y={gy}, Z={gz}"
         self.gps_label.text = f"🛰 GPS → Lat={lat}, Lon={lon}"
+
+    # ------------------------------------------------------
+    # AUTO-SAVE FUNCTION
+    # ------------------------------------------------------
+    def auto_save(self, *args):
+        """Automatically save the current telemetry readings to autosave.json."""
+        if not self.running:
+            return  # Only auto-save when trip is running
+
+        trip_data = {
+            "accel": self.accel_label.text,
+            "gyro": self.gyro_label.text,
+            "gps": self.gps_label.text,
+            "samples": self.samples
+        }
+
+        with open("autosave.json", "w") as f:
+            json.dump(trip_data, f)
+
+        print("Auto-saved trip data.")
+
+    # ------------------------------------------------------
+    # LOAD SAVED TRIP (for resume)
+    # ------------------------------------------------------
+    def load_saved_trip(self):
+        """Load previously saved data if available."""
+        if os.path.exists("autosave.json"):
+            with open("autosave.json", "r") as f:
+                return json.load(f)
+        return None
+
