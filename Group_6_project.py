@@ -1,72 +1,49 @@
 # -*- coding: utf-8 -*-
-#  from flask import Flask, request, jsonify
-# import os
-# import firebase_admin
-# from firebase_admin import credentials, auth
-#
-# app = Flask(__name__)
-#
-# # --- Resolve absolute path to the key, and init Firebase safely ---
-# BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-# SERVICE_KEY = os.path.join(BASE_DIR, "serviceAccountKey.json")
-#
-# if not os.path.exists(SERVICE_KEY):
-#     raise FileNotFoundError(f"serviceAccountKey.json not found at: {SERVICE_KEY}")
-#
-# if not firebase_admin._apps:
-#     cred = credentials.Certificate(SERVICE_KEY)
-#     firebase_admin.initialize_app(cred)
-#
-# @app.route("/ping", methods=["GET"])
-# def ping():
-#     return jsonify({"ok": True}), 200
-#
-# @app.route('/login', methods=['POST'])
-# def login():
-#     data = request.get_json(silent=True) or {}
-#     email = data.get("email")
-#     password = data.get("password")  # not verified here; demo only
-#
-#     if not email:
-#         return jsonify({"error": "Email is required."}), 400
-#
-#     try:
-#         user = auth.get_user_by_email(email)
-#         return jsonify({
-#             "message": f"User {user.email} authenticated successfully!",
-#             "uid": user.uid
-#         }), 200
-#     except Exception as e:
-#         # e.g., No user record found…
-#         return jsonify({"error": str(e)}), 404
-#
-#
-#
-# if __name__ == "__main__":
-#     # Pin host/port so they match your UI
-#     app.run(host="127.0.0.1", port=5000, debug=True)
-
-
-# -*- coding: utf-8 -*-
+import os
 from flask import Flask, request, jsonify
+
+# Optional: only import firebase_admin if the key is present
 import firebase_admin
 from firebase_admin import credentials, auth
-import os
 
 app = Flask(__name__)
 
-# --- Firebase Admin init ---
-# Make sure the file name exactly matches your file on disk!
-cred = credentials.Certificate("serviceAccountKey.json")
-if not firebase_admin._apps:
-    firebase_admin.initialize_app(cred)
+# ---- Resolve absolute path to the Firebase service key ----
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+KEY_PATH = os.path.join(BASE_DIR, "serviceAccountKey.json")
 
+FIREBASE_READY = False
+if os.path.exists(KEY_PATH):
+    try:
+        if not firebase_admin._apps:
+            cred = credentials.Certificate(KEY_PATH)
+            firebase_admin.initialize_app(cred)
+        FIREBASE_READY = True
+    except Exception as e:
+        # Firebase key exists but init failed (bad key/permissions)
+        # Keep FIREBASE_READY = False and allow dev fallback for /login
+        print(f"[WARN] Firebase init failed: {e}")
+else:
+    print(f"[WARN] Firebase key not found at: {KEY_PATH}. Using dev fallback for /login.")
+
+# ----------------- Helpers -----------------
 def json_err(msg, code=400):
     return jsonify({"error": msg}), code
 
+# ----------------- Routes ------------------
+@app.route("/health", methods=["GET"])
+def health():
+    return jsonify({
+        "status": "ok",
+        "firebase_ready": FIREBASE_READY
+    }), 200
+
 @app.route("/register", methods=["POST"])
 def register():
-    """Create a new user (email + password) and return uid with 201."""
+    """
+    Creates a new Firebase user (email + password) when Firebase is ready.
+    If Firebase is NOT ready, returns 503 to avoid implying users are persisted.
+    """
     data = request.get_json(silent=True) or {}
     email = (data.get("email") or "").strip()
     password = (data.get("password") or "").strip()
@@ -74,13 +51,14 @@ def register():
     if not email or not password:
         return json_err("email and password are required.", 400)
 
+    if not FIREBASE_READY:
+        return json_err("Registration unavailable in dev mode. Add serviceAccountKey.json.", 503)
+
     try:
         user = auth.create_user(email=email, password=password)
         return jsonify({"uid": user.uid, "message": "User created"}), 201
     except Exception as e:
-        # If user exists or any Firebase error, report nicely
         msg = str(e)
-        # Optional: turn specific cases into 409
         if "already exists" in msg.lower() or "EMAIL_EXISTS" in msg:
             return json_err("Email already registered.", 409)
         return json_err(msg, 400)
@@ -88,8 +66,10 @@ def register():
 @app.route("/login", methods=["POST"])
 def login():
     """
-    Current behavior: 'login' verifies that the email exists in Firebase.
-    NOTE: This does NOT validate the password yet.
+    If Firebase is ready: verify the user exists via get_user_by_email.
+    (Note: this does not verify password yet — wire password auth later.)
+    If Firebase is NOT ready: provide a simple dev fallback that accepts
+    any non-empty password for emails ending with @gmail.com.
     """
     data = request.get_json(silent=True) or {}
     email = (data.get("email") or "").strip()
@@ -98,20 +78,22 @@ def login():
     if not email or not password:
         return json_err("email and password are required.", 400)
 
-    try:
-        user = auth.get_user_by_email(email)
-        return jsonify({
-            "message": f"User {user.email} authenticated successfully!",
-            "uid": user.uid
-        }), 200
-    except Exception as e:
-        return json_err(str(e), 404)
+    if FIREBASE_READY:
+        try:
+            user = auth.get_user_by_email(email)
+            return jsonify({
+                "message": f"User {user.email} authenticated successfully!",
+                "uid": user.uid
+            }), 200
+        except Exception as e:
+            return json_err(str(e), 404)
+    else:
+        # 🔧 Dev fallback for your Kivy demo
+        if email.lower().endswith("@gmail.com") and password:
+            return jsonify({"uid": "DEV_UID_123", "message": "Login OK (dev mode)"}), 200
+        return json_err("Invalid credentials (dev mode expects @gmail.com + any password).", 401)
 
-@app.route("/health", methods=["GET"])
-def health():
-    return jsonify({"status": "ok"}), 200
-
+# ----------------- Entrypoint ----------------
 if __name__ == "__main__":
-    # Bind explicitly to 127.0.0.1:5000 to match your UI/tests
-    app.run(host="127.0.0.1", port=5000, debug=True)
-
+    # Bind to 5050 so your Kivy UI can call http://127.0.0.1:5050/login
+    app.run(host="127.0.0.1", port=5050, debug=True)

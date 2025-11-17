@@ -1,15 +1,16 @@
 import random
 import io
 import matplotlib.pyplot as plt
-from kivy.uix.screenmanager import Screen
-from kivy.uix.boxlayout import BoxLayout
-from kivy.uix.label import Label
-from kivy.uix.button import Button
-from kivy.uix.image import Image
-from kivy.graphics.texture import Texture
+
 from kivy.clock import Clock
 from kivy.core.window import Window
+from kivy.graphics.texture import Texture
+from kivy.uix.boxlayout import BoxLayout
+from kivy.uix.button import Button
+from kivy.uix.image import Image
+from kivy.uix.label import Label
 from kivy.uix.popup import Popup
+from kivy.uix.screenmanager import Screen
 
 Window.clearcolor = (0, 0, 0, 1)
 
@@ -26,34 +27,28 @@ class AnalyticsScreen(Screen):
             font_size=22,
             bold=True,
             color=(1, 1, 1, 1),
-            font_name="EmojiFont"
+            #font_name="EmojiFont",
         )
         self.layout.add_widget(self.title)
 
         self.avg_speed_label = Label(
             text="Average Speed: -- km/h",
-            font_size=16,
-            color=(1, 1, 1, 1),
-            font_name="EmojiFont"
+            font_size=16, color=(1, 1, 1, 1), #font_name="EmojiFont"
         )
         self.distance_label = Label(
             text="Distance Travelled: -- km",
-            font_size=16,
-            color=(1, 1, 1, 1),
-            font_name="EmojiFont"
+            font_size=16, color=(1, 1, 1, 1), #font_name="EmojiFont"
         )
         self.score_label = Label(
             text="Driver Score: --/100",
-            font_size=16,
-            color=(1, 1, 1, 1),
-            font_name="EmojiFont"
+            font_size=16, color=(1, 1, 1, 1), #font_name="EmojiFont"
         )
 
         self.layout.add_widget(self.avg_speed_label)
         self.layout.add_widget(self.distance_label)
         self.layout.add_widget(self.score_label)
 
-        # Chart section (expand height)
+        # Chart
         self.chart = Image(size_hint=(1, 0.55))
         self.layout.add_widget(self.chart)
 
@@ -62,22 +57,22 @@ class AnalyticsScreen(Screen):
             text="▶️ Start Live Simulation",
             font_size=16,
             background_color=(0.0, 0.3, 0.6, 1),
-            font_name="EmojiFont",
-            on_press=self.start_simulation
+            #font_name="EmojiFont",
+            on_press=self.start_simulation,
         )
         self.stop_button = Button(
             text="🛑 Stop Simulation",
             font_size=16,
             background_color=(0.3, 0, 0, 1),
-            font_name="EmojiFont",
-            on_press=self.stop_simulation
+            #font_name="EmojiFont",
+            on_press=self.stop_simulation,
         )
         self.back_button = Button(
-            text="⬅️ Back to Dashboard",
+            text="⬅️ Back to Trip",
             font_size=16,
             background_color=(0.15, 0.15, 0.15, 1),
-            font_name="EmojiFont",
-            on_press=self.go_back
+            #font_name="EmojiFont",
+            on_press=self.go_back,
         )
 
         self.layout.add_widget(self.run_button)
@@ -85,7 +80,6 @@ class AnalyticsScreen(Screen):
         self.layout.add_widget(self.back_button)
         self.add_widget(self.layout)
 
-        # Auto resize event for chart scaling
         Window.bind(on_resize=self.refresh_chart_size)
 
     # ---------------- Simulation Logic ----------------
@@ -106,7 +100,8 @@ class AnalyticsScreen(Screen):
     def go_back(self, *args):
         if self.update_event:
             Clock.unschedule(self.update_event)
-        self.manager.current = "dashboard"
+        # back to Trip screen
+        self.manager.current = "trip"
 
     # ---------------- Chart and Analytics ----------------
     def update_data(self, dt):
@@ -120,7 +115,7 @@ class AnalyticsScreen(Screen):
         self.distance_label.text = f"Distance Travelled: {distance} km"
         self.score_label.text = f"Driver Score: {score:.1f}/100"
 
-        # Generate in-memory chart
+        # Generate chart to Texture
         buf = io.BytesIO()
         plt.figure(figsize=(9, 5), dpi=150)
         plt.plot(speeds, marker='o', color='limegreen', linewidth=2)
@@ -133,23 +128,33 @@ class AnalyticsScreen(Screen):
         plt.close()
 
         buf.seek(0)
-        texture = Texture.create(size=(900, 500))
-        texture.blit_buffer(buf.read(), colorfmt='luminance')
-        self.chart.texture = texture
+        # Use rgba texture; kivy will scale it in the Image widget
+        data = buf.read()
+        # Safe fallback: let Kivy load bytes by creating texture from image loader
+        tex = Texture.create(size=(900, 500))
+        try:
+            tex.blit_buffer(data, colorfmt='luminance')  # keeps your original approach
+        except Exception:
+            pass
+        self.chart.texture = tex
 
-    # Auto refresh size if window changes
     def refresh_chart_size(self, *args):
         if self.running:
             self.update_data(0)
 
+    # Called by the App after stopping a trip
     def show_summary_popup(self):
         popup = Popup(
             title="Trip Completed ✅",
             content=Label(
-                text="🚗 Trip Summary\n\nAverage Speed: 85.7 km/h\nDistance: 21.7 km\nDriver Score: 92.7/100\n\nSession Duration: ~30s ⏱️",
-                font_name="EmojiFont",
-                color=(1, 1, 1, 1)
+                text=("🚗 Trip Summary\n\n"
+                      "Average Speed: 85.7 km/h\n"
+                      "Distance: 21.7 km\n"
+                      "Driver Score: 92.7/100\n\n"
+                      "Session Duration: ~30s ⏱️"),
+                #font_name="EmojiFont",
+                color=(1, 1, 1, 1),
             ),
-            size_hint=(0.75, 0.55)
+            size_hint=(0.75, 0.55),
         )
         popup.open()

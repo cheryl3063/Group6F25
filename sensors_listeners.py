@@ -1,3 +1,4 @@
+# sensors_listeners.py
 import random
 import time
 from datetime import datetime
@@ -12,7 +13,6 @@ class SensorListener:
         print("\n=== Sensors Initialized ===")
         print("Accelerometer, Gyroscope, and GPS are now active.\n")
 
-        # Simulate 10 readings for demo
         for i in range(10):
             if not self.is_active:
                 break
@@ -33,7 +33,7 @@ class SensorListener:
             print(f"[{timestamp}] Gyroscope → X={gx}, Y={gy}, Z={gz}")
             print(f"[{timestamp}] GPS → Lat={latitude}, Lon={longitude}\n")
 
-            time.sleep(1)  # delay between readings
+            time.sleep(1)
 
     def stop_listeners(self):
         """Stop collecting sensor data"""

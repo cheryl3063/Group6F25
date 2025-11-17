@@ -9,16 +9,16 @@ from kivy.uix.textinput import TextInput
 from kivy.uix.button import Button
 from kivy.uix.popup import Popup
 from kivy.uix.screenmanager import ScreenManager, Screen, FadeTransition
-from kivy.core.text import LabelBase
 
-# 🧩 Local project imports
+# Import other project modules
 import main
-from analytics_screen import AnalyticsScreen  # ✅ make sure this file exists in the same folder
+from analytics_screen import AnalyticsScreen
+from trip_screen import TripRecordingScreen
+from trip_summary_screen import TripSummaryScreen
+from sensors_listeners import SensorListener
 
-# Register emoji-friendly font
-LabelBase.register(name="EmojiFont", fn_regular="C:\\Windows\\Fonts\\seguiemj.ttf")
 
-API_URL = "http://127.0.0.1:5000/login"
+API_URL = "http://127.0.0.1:5050/login"
 
 
 # -------------------------------------------------------------------
@@ -29,13 +29,13 @@ class LoginScreen(Screen):
         super().__init__(**kwargs)
         layout = BoxLayout(orientation='vertical', padding=25, spacing=15)
 
-        layout.add_widget(Label(text="Driver Analytics", font_size=28, bold=True, font_name="EmojiFont"))
-        layout.add_widget(Label(text="Login to continue", font_size=18, font_name="EmojiFont"))
+        layout.add_widget(Label(text="Driver Analytics", font_size=28, bold=True))
+        layout.add_widget(Label(text="Login to continue", font_size=18))
 
         self.email_input = TextInput(hint_text="Email", multiline=False, size_hint_y=None, height=40)
         self.password_input = TextInput(hint_text="Password", password=True, multiline=False, size_hint_y=None, height=40)
 
-        login_btn = Button(text="Login", size_hint_y=None, height=45, font_name="EmojiFont")
+        login_btn = Button(text="Login", size_hint_y=None, height=45)
         login_btn.bind(on_press=self.handle_login)
 
         layout.add_widget(self.email_input)
@@ -51,12 +51,15 @@ class LoginScreen(Screen):
         if not email or not password:
             self.show_popup("Error", "Please enter both email and password.")
             return
-        if "@" not in email or "." not in email:
-            self.show_popup("Error", "Invalid email format.")
+
+        # Gmail validation
+        if not email.endswith("@gmail.com"):
+            self.show_popup("Error", "Please enter a valid Gmail address ending with '@gmail.com'.")
             return
 
         try:
             resp = requests.post(API_URL, json={"email": email, "password": password}, timeout=10)
+
             if resp.status_code == 200:
                 data = resp.json()
                 uid = data.get("uid", "N/A")
@@ -66,13 +69,14 @@ class LoginScreen(Screen):
             else:
                 msg = resp.json().get("error") or resp.text
                 self.show_popup("Error", msg)
+
         except requests.exceptions.RequestException as e:
             self.show_popup("Error", f"Connection error: {e}")
 
     def show_popup(self, title, message):
         Popup(
             title=title,
-            content=Label(text=message, font_size=16, font_name="EmojiFont"),
+            content=Label(text=message, font_size=16),
             size_hint=(0.75, 0.35)
         ).open()
 
@@ -84,18 +88,26 @@ class DashboardScreen(Screen):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.layout = BoxLayout(orientation='vertical', padding=25, spacing=20)
-        self.label = Label(text="Welcome!", font_size=24, font_name="EmojiFont")
+        self.label = Label(text="Welcome!", font_size=24)
         self.layout.add_widget(self.label)
 
-        btn_trip = Button(text="🚗 Start Trip Recording", size_hint_y=None, height=45, font_name="EmojiFont")
-        btn_trip.bind(on_press=self.start_trip)
+        # Trip Summary Button
+        btn_summary = Button(text="🧾 Generate Trip Summary", size_hint_y=None, height=45)
+        btn_summary.bind(on_press=self.open_trip_summary)
+        self.layout.add_widget(btn_summary)
+
+        # Start Trip Button
+        btn_trip = Button(text="🚗 Start Trip Recording", size_hint_y=None, height=45)
+        btn_trip.bind(on_press=lambda x: self.open_trip())
         self.layout.add_widget(btn_trip)
 
-        btn_analytics = Button(text="📊 View Analytics", size_hint_y=None, height=45, font_name="EmojiFont")
+        # Analytics Button
+        btn_analytics = Button(text="📊 View Analytics", size_hint_y=None, height=45)
         btn_analytics.bind(on_press=self.open_analytics)
         self.layout.add_widget(btn_analytics)
 
-        btn_logout = Button(text="🔒 Logout", size_hint_y=None, height=45, font_name="EmojiFont")
+        # Logout Button
+        btn_logout = Button(text="🔒 Logout", size_hint_y=None, height=45)
         btn_logout.bind(on_press=self.logout)
         self.layout.add_widget(btn_logout)
 
@@ -104,29 +116,11 @@ class DashboardScreen(Screen):
     def set_user(self, email, uid):
         self.label.text = f"👋 Welcome, {email}!\nUser ID: {uid}"
 
-    def start_trip(self, instance):
-        try:
-            old_stdout = sys.stdout
-            sys.stdout = io.StringIO()
-            main.main()
-            result_output = sys.stdout.getvalue().strip()
-            sys.stdout = old_stdout
-
-            Popup(
-                title="Trip Recording",
-                content=Label(text=result_output, font_size=16, font_name="EmojiFont"),
-                size_hint=(0.75, 0.45)
-            ).open()
-        except Exception as e:
-            sys.stdout = old_stdout
-            Popup(
-                title="Error",
-                content=Label(text=f"Failed to start trip: {e}", font_size=16, font_name="EmojiFont"),
-                size_hint=(0.75, 0.35)
-            ).open()
+    def open_trip(self):
+        self.manager.transition.direction = "left"
+        self.manager.current = "trip"
 
     def open_analytics(self, instance):
-        """Switch to the Analytics screen"""
         self.manager.transition.direction = "left"
         self.manager.current = "analytics"
 
@@ -134,17 +128,43 @@ class DashboardScreen(Screen):
         self.manager.transition.direction = "right"
         self.manager.current = "login"
 
+    def open_trip_summary(self, *_):
+        samples = [
+            {"speed": 42.0, "brake_events": 0, "harsh_accel": 0, "distance_km": 1.2},
+            {"speed": 55.0, "brake_events": 1, "harsh_accel": 0, "distance_km": 2.0},
+            {"speed": 61.0, "brake_events": 0, "harsh_accel": 1, "distance_km": 1.6},
+        ]
+        ts = self.manager.get_screen("trip_summary")
+        ts.set_samples(samples)
+        self.manager.transition.direction = "left"
+        self.manager.current = "trip_summary"
+
 
 # -------------------------------------------------------------------
 # MAIN APP CONTROLLER
 # -------------------------------------------------------------------
 class DriverApp(App):
+
     def build(self):
+        self.sensor_listener = SensorListener()  # ✅ Add sensor manager
+
         sm = ScreenManager(transition=FadeTransition())
         sm.add_widget(LoginScreen(name="login"))
         sm.add_widget(DashboardScreen(name="dashboard"))
-        sm.add_widget(AnalyticsScreen(name="analytics"))  # ✅ Added correctly
+        sm.add_widget(AnalyticsScreen(name="analytics"))
+        sm.add_widget(TripSummaryScreen(name="trip_summary"))
+        sm.add_widget(TripRecordingScreen(name="trip"))  # Live telemetry screen
+
         return sm
+
+    # Called from TripRecordingScreen
+    def start_trip_recording(self):
+        print("DriverApp → Starting sensors...")
+        self.sensor_listener.start_listeners()
+
+    def stop_trip_recording(self):
+        print("DriverApp → Stopping sensors...")
+        self.sensor_listener.stop_listeners()
 
 
 if __name__ == "__main__":
