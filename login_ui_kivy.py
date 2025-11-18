@@ -2,23 +2,31 @@
 import io
 import sys
 import requests
+import main
 from kivy.app import App
 from kivy.uix.label import Label
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.textinput import TextInput
 from kivy.uix.button import Button
 from kivy.uix.popup import Popup
-from kivy.uix.screenmanager import ScreenManager, Screen, FadeTransition
-
-# Import other project modules
-import main
 from analytics_screen import AnalyticsScreen
+from sensors_listeners import SensorListener
 from trip_screen import TripRecordingScreen
 from trip_summary_screen import TripSummaryScreen
-from sensors_listeners import SensorListener
+from kivy.uix.screenmanager import ScreenManager, Screen, FadeTransition
+#from kivy.core.text import LabelBase
 
+import main
+from analytics_screen import AnalyticsScreen
+from sensors_listeners import SensorListener   # ⬅️ ADD THIS
+from trip_screen import TripRecordingScreen    # if you’re using this screen
+
+# Register emoji-friendly font
+#LabelBase.register(name="EmojiFont", fn_regular="C:\\Windows\\Fonts\\seguiemj.ttf")
+#LabelBase.register(name="EmojiFont", fn_regular="/System/Library/Fonts/Apple Color Emoji.ttc")
 
 API_URL = "http://127.0.0.1:5050/login"
+
 
 
 # -------------------------------------------------------------------
@@ -87,39 +95,126 @@ class LoginScreen(Screen):
 class DashboardScreen(Screen):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+
+        # 👇 later you can make this reflect real state (e.g., load from file)
+        self.has_saved_trip = True    # assume there is a previous trip for demo
+
         self.layout = BoxLayout(orientation='vertical', padding=25, spacing=20)
         self.label = Label(text="Welcome!", font_size=24)
         self.layout.add_widget(self.label)
 
-        # Trip Summary Button
-        btn_summary = Button(text="🧾 Generate Trip Summary", size_hint_y=None, height=45)
-        btn_summary.bind(on_press=self.open_trip_summary)
-        self.layout.add_widget(btn_summary)
-
-        # Start Trip Button
+        # --- Buttons on the dashboard ---
         btn_trip = Button(text="🚗 Start Trip Recording", size_hint_y=None, height=45)
-        btn_trip.bind(on_press=lambda x: self.open_trip())
+        btn_trip.bind(on_press=self.start_trip)
         self.layout.add_widget(btn_trip)
 
-        # Analytics Button
         btn_analytics = Button(text="📊 View Analytics", size_hint_y=None, height=45)
         btn_analytics.bind(on_press=self.open_analytics)
         self.layout.add_widget(btn_analytics)
 
-        # Logout Button
         btn_logout = Button(text="🔒 Logout", size_hint_y=None, height=45)
         btn_logout.bind(on_press=self.logout)
         self.layout.add_widget(btn_logout)
 
         self.add_widget(self.layout)
 
+    # -------- Helper methods --------
     def set_user(self, email, uid):
         self.label.text = f"👋 Welcome, {email}!\nUser ID: {uid}"
 
-    def open_trip(self):
-        self.manager.transition.direction = "left"
-        self.manager.current = "trip"
+    def start_trip(self, instance):
+        """
+        Called when the user taps 'Start Trip Recording'.
+        If there is a saved trip, show a 'Resume or New' popup.
+        Otherwise just start a fresh trip.
+        """
+        if self.has_saved_trip:
+            self._show_resume_dialog()
+        else:
+            self._run_trip_flow(resume=False)
 
+    def _show_resume_dialog(self):
+        """Build and display the 'resume trip' popup."""
+        content = BoxLayout(orientation='vertical', spacing=15, padding=20)
+
+        msg = Label(
+            text="We found a previous trip.\nWould you like to resume it or start a new one?",
+            font_size=16,
+            #font_name="EmojiFont"
+        )
+        content.add_widget(msg)
+
+        # Buttons row
+        btn_row = BoxLayout(orientation='horizontal', spacing=10, size_hint_y=None, height=45)
+        btn_resume = Button(text="🔁 Resume trip")
+        btn_new = Button(text="🆕 New trip")
+        btn_row.add_widget(btn_resume)
+        btn_row.add_widget(btn_new)
+        content.add_widget(btn_row)
+
+        popup = Popup(
+            title="Resume trip?",
+            content=content,
+            size_hint=(0.85, 0.45),
+            auto_dismiss=True,
+        )
+
+        # Wire the buttons
+        btn_resume.bind(on_press=lambda *_: self._on_resume_trip(popup))
+        btn_new.bind(on_press=lambda *_: self._on_new_trip(popup))
+
+        popup.open()
+
+    def _on_resume_trip(self, popup):
+        popup.dismiss()
+        self._run_trip_flow(resume=True)
+
+    def _on_new_trip(self, popup):
+        popup.dismiss()
+        # if user chooses a brand-new trip, we clear the saved flag
+        self.has_saved_trip = False
+        self._run_trip_flow(resume=False)
+
+    def _run_trip_flow(self, resume: bool):
+        """
+        Runs your existing 'start trip' backend logic and shows the output
+        in a Kivy popup. We just add a little header to distinguish
+        Resume vs New.
+        """
+        try:
+            old_stdout = sys.stdout
+            sys.stdout = io.StringIO()
+
+            if resume:
+                print("🔁 Resuming previous trip...")
+            else:
+                print("🆕 Starting a new trip...")
+
+            # Your existing permission / sensor pipeline
+            main.main()
+
+            result_output = sys.stdout.getvalue().strip()
+            sys.stdout = old_stdout
+
+            Popup(
+                title="Trip Recording",
+                content=Label(text=result_output, font_size=16),
+                size_hint=(0.75, 0.45)
+            ).open()
+
+        except Exception as e:
+            sys.stdout = old_stdout
+            Popup(
+                title="Error",
+                content=Label(
+                    text=f"Failed to start trip: {e}",
+                    font_size=16,
+                    #font_name="EmojiFont"
+                ),
+                size_hint=(0.75, 0.35)
+            ).open()
+
+    # -------- Navigation buttons --------
     def open_analytics(self, instance):
         self.manager.transition.direction = "left"
         self.manager.current = "analytics"
@@ -128,16 +223,6 @@ class DashboardScreen(Screen):
         self.manager.transition.direction = "right"
         self.manager.current = "login"
 
-    def open_trip_summary(self, *_):
-        samples = [
-            {"speed": 42.0, "brake_events": 0, "harsh_accel": 0, "distance_km": 1.2},
-            {"speed": 55.0, "brake_events": 1, "harsh_accel": 0, "distance_km": 2.0},
-            {"speed": 61.0, "brake_events": 0, "harsh_accel": 1, "distance_km": 1.6},
-        ]
-        ts = self.manager.get_screen("trip_summary")
-        ts.set_samples(samples)
-        self.manager.transition.direction = "left"
-        self.manager.current = "trip_summary"
 
 
 # -------------------------------------------------------------------
