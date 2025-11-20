@@ -34,6 +34,10 @@ class TripSummaryScreen(Screen):
         self.btn_refresh.bind(on_press=lambda *_: self._render())
         btn_row.add_widget(self.btn_refresh)
 
+        self.btn_view_score = Button(text="⭐ View Score")
+        self.btn_view_score.bind(on_press=lambda *_: self.go_to_score())
+        btn_row.add_widget(self.btn_view_score)
+
         root.add_widget(btn_row)
         self.add_widget(root)
 
@@ -51,3 +55,31 @@ class TripSummaryScreen(Screen):
             f"• Harsh Accel: {s['harsh_accel']}\n\n"
             f"⭐ Safety Score: [b]{s['safety_score']}[/b]"
         )
+
+    def go_to_score(self, *args):
+        summary = compute_summary(self.samples)
+
+        ui_data = {
+            "score": summary["safety_score"],
+            "avg_speed": summary["avg_speed_kmh"],
+            "distance_km": summary["total_distance_km"],
+            "brake_events": summary["brake_events"],
+            "harsh_accel": summary["harsh_accel"]
+        }
+
+        score_screen = self.manager.get_screen("score")
+        score_screen.update_score(ui_data)
+        self.manager.current = "score"
+
+    #def view_score(self, summary):
+        #ui_data = {
+            #"score": summary["safety_score"],
+            #"avg_speed": summary["avg_speed_kmh"],
+            #"distance_km": summary["total_distance_km"],
+            #"brake_events": summary["brake_events"],
+            #"harsh_accel": summary["harsh_accel"]
+       # }
+
+        score_screen = self.manager.get_screen("score")
+        score_screen.update_score(ui_data)
+        self.manager.current = "score"

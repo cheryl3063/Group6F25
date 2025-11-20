@@ -9,6 +9,7 @@ from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.button import Button
 from kivy.uix.image import Image
 from kivy.uix.label import Label
+from kivy.metrics import dp
 from kivy.uix.popup import Popup
 from kivy.uix.screenmanager import Screen
 
@@ -158,3 +159,73 @@ class AnalyticsScreen(Screen):
             size_hint=(0.75, 0.55),
         )
         popup.open()
+
+
+class ScoreScreen(Screen):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+        root = BoxLayout(orientation="vertical", padding=dp(20), spacing=dp(20))
+
+        # Title
+        title = Label(
+            text="🚦 Driving Score",
+            font_size=32,
+            bold=True,
+            size_hint_y=None,
+            height=dp(60)
+        )
+        root.add_widget(title)
+
+        # Big score
+        self.score_label = Label(
+            text="--",
+            font_size=72,
+            bold=True,
+            markup=True,  # enables color tags
+        )
+        root.add_widget(self.score_label)
+
+        # Factors breakdown
+        self.factors = Label(
+            text="Loading...",
+            font_size=18,
+            halign="center",
+            valign="middle"
+        )
+        self.factors.bind(size=lambda *_: setattr(self.factors, "text_size", self.factors.size))
+        root.add_widget(self.factors)
+
+        self.add_widget(root)
+
+    def update_score(self, data):
+        """
+        data example:
+        {
+            "score": 82,
+            "avg_speed": 67.1,
+            "distance_km": 5.2,
+            "brake_events": 2,
+            "harsh_accel": 1
+        }
+        """
+
+        score = data["score"]
+
+        # Color logic
+        if score >= 80:
+            color = "[color=#4CAF50]"  # green
+        elif score >= 60:
+            color = "[color=#FFC107]"  # yellow
+        else:
+            color = "[color=#F44336]"  # red
+
+        self.score_label.text = f"{color}{score}[/color]"
+
+        # Breakdown labels
+        self.factors.text = (
+            f"Avg Speed: {data['avg_speed']} km/h\n"
+            f"Distance: {data['distance_km']} km\n"
+            f"Brake Events: {data['brake_events']}\n"
+            f"Harsh Accel: {data['harsh_accel']}"
+        )

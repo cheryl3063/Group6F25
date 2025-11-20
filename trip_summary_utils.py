@@ -2,9 +2,9 @@
 
 def compute_summary(samples):
     """
-    samples: list of dicts like
+    samples: list of dicts like:
       {"speed": 52.3, "brake_events": 1, "harsh_accel": 0, "distance_km": 1.8}
-    Returns a simple summary dict.
+    Returns a summary dict.
     """
     if not samples:
         return {
@@ -21,7 +21,7 @@ def compute_summary(samples):
     brakes = sum(s.get("brake_events", 0) for s in samples)
     harsh = sum(s.get("harsh_accel", 0) for s in samples)
 
-    # silly demo scoring: start at 100 and subtract small penalties
+    # Simple scoring model
     score = max(0, 100 - brakes * 2 - harsh * 3)
 
     return {
@@ -31,3 +31,4 @@ def compute_summary(samples):
         "harsh_accel": int(harsh),
         "safety_score": int(score),
     }
+

@@ -22,6 +22,8 @@ class DriveIQApp(App):
         self.sm = ScreenManager()
         self.sm.add_widget(TripRecordingScreen(name="trip"))
         self.sm.add_widget(AnalyticsScreen(name="analytics"))
+        self.sm.add_widget(ScoreScreen(name="score"))
+
         return self.sm
 
     def on_start(self):
