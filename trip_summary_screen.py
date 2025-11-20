@@ -20,8 +20,10 @@ class TripSummaryScreen(Screen):
             text="No data yet.",
             font_size=16,
             halign="left",
-            valign="top"
+            valign="top",
+            markup=True
         )
+
         self.metrics.bind(size=lambda *_: setattr(self.metrics, "text_size", self.metrics.size))
         root.add_widget(self.metrics)
 
