@@ -1,16 +1,10 @@
-# -*- coding: utf-8 -*-
-import random
-import time
-from threading import Thread
-import json
-import os
-
-from kivy.app import App
 from kivy.clock import Clock
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.button import Button
 from kivy.uix.label import Label
 from kivy.uix.screenmanager import Screen
+import random, time, json, os
+from threading import Thread
 
 
 class TripRecordingScreen(Screen):
@@ -62,38 +56,28 @@ class TripRecordingScreen(Screen):
         # Tracking telemetry state
         self.running = False
         self._thread = None
-        self.samples = []  # ⬅ stores telemetry for trip summary
+        self.samples = []
 
-        # auto-save every 5 seconds
-        Clock.schedule_interval(self.auto_save,5)
+        Clock.schedule_interval(self.auto_save, 5)
 
-    # ------------------------------------------------------
-    # START BUTTON
-    # ------------------------------------------------------
     def _start_clicked(self, *_):
         if self.running:
             return
 
         self.running = True
-        self.samples = []              # reset previous trip
+        self.samples = []
         self.start_btn.text = "🔵 Recording…"
 
-        # Start background thread for telemetry
         self._thread = Thread(target=self.update_telemetry, daemon=True)
         self._thread.start()
 
-    # ------------------------------------------------------
-    # STOP BUTTON → Go to Summary
-    # ------------------------------------------------------
     def _stop_clicked(self, *_):
         self.running = False
         self.start_btn.text = "▶️ Start Trip"
 
-        # DELETE autosave file if it exists
         if os.path.exists("autosave.json"):
             os.remove("autosave.json")
 
-        # Format samples for trip summary screen
         summary_samples = []
         for s in self.samples:
             summary_samples.append({
@@ -103,31 +87,19 @@ class TripRecordingScreen(Screen):
                 "distance_km": s["dist"]
             })
 
-        # Send data to summary screen
         trip_summary = self.manager.get_screen("trip_summary")
         trip_summary.set_samples(summary_samples)
 
-        # Navigate to summary
         self.manager.transition.direction = "left"
         self.manager.current = "trip_summary"
 
-    # ------------------------------------------------------
-    # TELEMETRY SIMULATION LOOP
-    # ------------------------------------------------------
     def update_telemetry(self):
-        """Simulate continuous sensor updates while running."""
         while self.running:
-            # Accelerometer
             ax, ay, az = [round(random.uniform(-9.8, 9.8), 2) for _ in range(3)]
-
-            # Gyroscope
             gx, gy, gz = [round(random.uniform(-3.14, 3.14), 2) for _ in range(3)]
-
-            # GPS
             lat = round(43.45 + random.uniform(-0.001, 0.001), 6)
             lon = round(-80.49 + random.uniform(-0.001, 0.001), 6)
 
-            # Fake additional metrics for summary
             sample = {
                 "speed": random.randint(30, 90),
                 "brake": random.choice([0, 0, 1]),
@@ -136,30 +108,21 @@ class TripRecordingScreen(Screen):
             }
             self.samples.append(sample)
 
-            # Schedule UI update
             Clock.schedule_once(
-                lambda dt, ax=ax, ay=ay, az=az,
-                gx=gx, gy=gy, gz=gz, lat=lat, lon=lon:
+                lambda dt, ax=ax, ay=ay, az=az, gx=gx, gy=gy, gz=gz, lat=lat, lon=lon:
                 self.refresh_labels(ax, ay, az, gx, gy, gz, lat, lon)
             )
 
             time.sleep(1)
 
-    # ------------------------------------------------------
-    # UPDATE UI LABELS
-    # ------------------------------------------------------
     def refresh_labels(self, ax, ay, az, gx, gy, gz, lat, lon):
         self.accel_label.text = f"🪶 Accelerometer → X={ax}, Y={ay}, Z={az}"
         self.gyro_label.text = f"⚙️ Gyroscope → X={gx}, Y={gy}, Z={gz}"
         self.gps_label.text = f"🛰 GPS → Lat={lat}, Lon={lon}"
 
-    # ------------------------------------------------------
-    # AUTO-SAVE FUNCTION
-    # ------------------------------------------------------
     def auto_save(self, *args):
-        """Automatically save the current telemetry readings to autosave.json."""
         if not self.running:
-            return  # Only auto-save when trip is running
+            return
 
         trip_data = {
             "accel": self.accel_label.text,
@@ -171,15 +134,8 @@ class TripRecordingScreen(Screen):
         with open("autosave.json", "w") as f:
             json.dump(trip_data, f)
 
-        print("Auto-saved trip data.")
-
-    # ------------------------------------------------------
-    # LOAD SAVED TRIP (for resume)
-    # ------------------------------------------------------
     def load_saved_trip(self):
-        """Load previously saved data if available."""
         if os.path.exists("autosave.json"):
             with open("autosave.json", "r") as f:
                 return json.load(f)
         return None
-

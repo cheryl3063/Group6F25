@@ -1,78 +1,127 @@
+# login_ui_kivy.py
 # -*- coding: utf-8 -*-
-import io
-import sys
 import requests
-
 from kivy.app import App
 from kivy.uix.label import Label
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.textinput import TextInput
 from kivy.uix.button import Button
+from kivy.metrics import dp
 from kivy.uix.popup import Popup
-from score_screen import ScoreScreen
 from kivy.uix.screenmanager import ScreenManager, Screen, FadeTransition
 
 from analytics_screen import AnalyticsScreen
-from sensors_listeners import SensorListener
 from trip_screen import TripRecordingScreen
 from trip_summary_screen import TripSummaryScreen
-from score_screen import ScoreScreen   # ✅ FIXED: This was missing
+from score_screen import ScoreScreen
 
 API_URL = "http://127.0.0.1:5050/login"
 
 
-# -------------------------------------------------------------------
-# LOGIN SCREEN
-# -------------------------------------------------------------------
+# ---------------------------------------------------------
+# LOGIN SCREEN (cleaner layout + accessibility polish)
+# ---------------------------------------------------------
 class LoginScreen(Screen):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        layout = BoxLayout(orientation='vertical', padding=25, spacing=15)
 
-        layout.add_widget(Label(text="Driver Analytics", font_size=28, bold=True))
-        layout.add_widget(Label(text="Login to continue", font_size=18))
+        root = BoxLayout(
+            orientation='vertical',
+            padding=35,
+            spacing=20
+        )
 
-        self.email_input = TextInput(hint_text="Email", multiline=False, height=40, size_hint_y=None)
-        self.password_input = TextInput(hint_text="Password", password=True, multiline=False, height=40, size_hint_y=None)
+        # Title section
+        root.add_widget(Label(
+            text="🚗 Driver Analytics",
+            font_size=32,
+            bold=True,
+            halign="center",
+            valign="middle",
+        ))
 
-        login_btn = Button(text="Login", height=45, size_hint_y=None)
+        root.add_widget(Label(
+            text="Sign in to continue",
+            font_size=20,
+            color=(0.8, 0.8, 0.8, 1),
+            halign="center"
+        ))
+
+        # Inputs
+        self.email_input = TextInput(
+            hint_text="Email Address",
+            multiline=False,
+            size_hint_y=None,
+            height=55,
+            font_size=18,
+            padding_y=(14, 14),
+            background_normal='',
+            background_color=(0.15, 0.15, 0.15, 1),
+            foreground_color=(1, 1, 1, 1),
+            cursor_color=(0.2, 0.6, 1, 1),
+        )
+
+        self.password_input = TextInput(
+            hint_text="Password",
+            multiline=False,
+            password=True,
+            size_hint_y=None,
+            height=55,
+            font_size=18,
+            padding_y=(14, 14),
+            background_normal='',
+            background_color=(0.15, 0.15, 0.15, 1),
+            foreground_color=(1, 1, 1, 1),
+            cursor_color=(0.2, 0.6, 1, 1),
+        )
+
+        root.add_widget(self.email_input)
+        root.add_widget(self.password_input)
+
+        # Login button
+        login_btn = Button(
+            text="Sign In",
+            size_hint_y=None,
+            height=55,
+            font_size=20,
+            bold=True,
+            background_normal='',
+            background_color=(0.1, 0.5, 1, 1),
+        )
         login_btn.bind(on_press=self.handle_login)
+        root.add_widget(login_btn)
 
-        layout.add_widget(self.email_input)
-        layout.add_widget(self.password_input)
-        layout.add_widget(login_btn)
+        self.add_widget(root)
 
-        self.add_widget(layout)
-
+    # ------------------------------------------------------
+    # Login Logic (unchanged)
+    # ------------------------------------------------------
     def handle_login(self, instance):
         email = self.email_input.text.strip()
         password = self.password_input.text.strip()
 
         if not email or not password:
-            return self.show_popup("Error", "Please enter both email and password.")
+            return self.show_popup("Missing Info", "Please enter both email and password.")
 
         if not email.endswith("@gmail.com"):
-            return self.show_popup("Error", "Email must end with @gmail.com.")
+            return self.show_popup("Invalid Email", "Email must end with @gmail.com.")
 
-        try:
-            # For now, bypass backend login to allow UI testing
-            print("⚠️ Bypassing backend login (demo mode).")
-            self.manager.current = "dashboard"
-
-        except requests.exceptions.RequestException as e:
-            self.show_popup("Error", f"Connection error: {e}")
+        # TEMP bypass for UI testing
+        print("🔓 Demo mode: bypassing login.")
+        self.manager.current = "dashboard"
 
     def show_popup(self, title, message):
-        Popup(
+        popup = Popup(
             title=title,
-            content=Label(text=message, font_size=16),
+            content=Label(text=message, font_size=18),
             size_hint=(0.75, 0.35)
-        ).open()
+        )
+        popup.open()
 
 
-# -------------------------------------------------------------------
-# DASHBOARD SCREEN
-# -------------------------------------------------------------------
+# ---------------------------------------------------------
+# DASHBOARD SCREEN (same as before, but nicer visuals)
+# ---------------------------------------------------------
 class DashboardScreen(Screen):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -89,6 +138,11 @@ class DashboardScreen(Screen):
         btn_analytics.bind(on_press=self.go_analytics)
         layout.add_widget(btn_analytics)
 
+        # ⭐ NEW BUTTON
+        btn_summary = Button(text="📄 Trip Summary", height=45, size_hint_y=None)
+        btn_summary.bind(on_press=lambda *_: setattr(self.manager, "current", "trip_summary"))
+        layout.add_widget(btn_summary)
+
         btn_score = Button(text="⭐ View Score", height=45, size_hint_y=None)
         btn_score.bind(on_press=self.go_score)
         layout.add_widget(btn_score)
@@ -99,22 +153,43 @@ class DashboardScreen(Screen):
 
         self.add_widget(layout)
 
-    def go_trip(self, instance):
+
+    # -------------------------------
+    #   MISSING METHODS (ADD THESE)
+    # -------------------------------
+    def go_trip(self, *args):
         self.manager.current = "trip"
 
-    def go_analytics(self, instance):
+    def go_analytics(self, *args):
         self.manager.current = "analytics"
 
-    def go_score(self, instance):
+    def go_score(self, *args):
         self.manager.current = "score"
 
-    def logout(self, instance):
+    def logout(self, *args):
         self.manager.current = "login"
 
 
-# -------------------------------------------------------------------
-# MAIN APP CONTROLLER
-# -------------------------------------------------------------------
+        # Create a container for rounded card
+        container = BoxLayout(padding=dp(10))
+        with container.canvas.before:
+            from kivy.graphics import Color, RoundedRectangle
+            Color(0.15, 0.15, 0.15, 1)  # soft dark grey card
+            self.bg_card = RoundedRectangle(radius=[20])
+
+        # Auto-update card size
+        def update_card(*args):
+            self.bg_card.pos = container.pos
+            self.bg_card.size = container.size
+
+        container.bind(pos=update_card, size=update_card)
+
+        container.add_widget(self.layout)
+        self.add_widget(container)
+
+# ---------------------------------------------------------
+# MAIN APP
+# ---------------------------------------------------------
 class DriverApp(App):
 
     def build(self):
@@ -125,7 +200,7 @@ class DriverApp(App):
         sm.add_widget(TripRecordingScreen(name="trip"))
         sm.add_widget(AnalyticsScreen(name="analytics"))
         sm.add_widget(TripSummaryScreen(name="trip_summary"))
-        sm.add_widget(ScoreScreen(name="score"))     # ✅ FIXED: Added properly
+        sm.add_widget(ScoreScreen(name="score"))
 
         return sm
 

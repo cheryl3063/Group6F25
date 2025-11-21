@@ -1,5 +1,8 @@
 # trip_summary_utils.py
 
+from datetime import datetime
+
+
 def compute_summary(samples):
     """
     samples: list of dicts like:
@@ -30,5 +33,7 @@ def compute_summary(samples):
         "brake_events": int(brakes),
         "harsh_accel": int(harsh),
         "safety_score": int(score),
+        "timestamp": datetime.now().isoformat()
+
     }
 
