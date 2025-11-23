@@ -75,6 +75,17 @@ class TripRecordingScreen(Screen):
             return
 
         self.running = True
+        self.samples = []
+        self.start_btn.text = "🔵 Recording…"
+
+        # RESET alert state for new trip
+        summary_screen = self.manager.get_screen("trip_summary")
+        summary_screen.alert_rules.reset()
+
+        self._thread = Thread(target=self.update_telemetry, daemon=True)
+        self._thread.start()
+
+        self.running = True
         self.samples = []              # reset previous trip
         self.start_btn.text = "🔵 Recording…"
 

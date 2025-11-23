@@ -1,0 +1,18 @@
+[
+    {
+        "total_distance_km": 6.91,
+        "avg_speed_kmh": 59.8,
+        "brake_events": 4,
+        "harsh_accel": 8,
+        "safety_score": 68,
+        "low_score_alert": false
+    },
+    {
+        "total_distance_km": 8.31,
+        "avg_speed_kmh": 62.5,
+        "brake_events": 16,
+        "harsh_accel": 13,
+        "safety_score": 29,
+        "low_score_alert": true
+    }
+]

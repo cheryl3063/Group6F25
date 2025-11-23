@@ -1,0 +1,17 @@
+[INFO   ] Logger: Record log in C:\Users\divin\Desktop\Group6F25\.kivy\logs\kivy_25-11-06_28.txt
+[INFO   ] deps: Successfully imported "kivy_deps.angle" 0.5.0
+[INFO   ] deps: Successfully imported "kivy_deps.glew" 0.3.1
+[INFO   ] deps: Successfully imported "kivy_deps.sdl3" 0.0.10
+[INFO   ] Kivy: v3.0.0.dev0
+[INFO   ] Kivy: Installed at "C:\Users\divin\Desktop\Group6F25\.venv\Lib\site-packages\kivy\__init__.py"
+[INFO   ] Python: v3.14.0 (tags/v3.14.0:ebf955d, Oct  7 2025, 10:15:03) [MSC v.1944 64 bit (AMD64)]
+[INFO   ] Python: Interpreter at "C:\Users\divin\Desktop\Group6F25\.venv\Scripts\python.exe"
+[INFO   ] Logger: Purge log fired. Processing...
+[INFO   ] Logger: Purge finished!
+[DEBUG  ] Cache: register <kv.resourcefind> with limit=None, timeout=60
+[DEBUG  ] Cache: register <kv.image> with limit=None, timeout=60
+[DEBUG  ] Cache: register <kv.atlas> with limit=None, timeout=None
+[INFO   ] Image: Providers: img_tex, img_dds, img_sdl3 (img_pil, img_ffpyplayer ignored)
+[DEBUG  ] Cache: register <kv.texture> with limit=1000, timeout=60
+[DEBUG  ] Cache: register <kv.shader> with limit=1000, timeout=3600
+[DEBUG  ] Cache: register <kv.graphics.texture> with limit=None, timeout=None
