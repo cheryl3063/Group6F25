@@ -1,6 +1,7 @@
 import json
 import os
 
+
 class PermissionManager:
     def __init__(self):
         self.permissions_file = "permissions.json"
@@ -22,7 +23,7 @@ class PermissionManager:
             json.dump(self.permissions, file, indent=4)
 
     def request_permissions(self):
-        """Simulate user granting or denying permissions."""
+        """Simulate user granting or denying permissions (CLI)."""
         print("=== Requesting Permissions ===")
         for key in self.permissions:
             if not self.permissions[key]:
@@ -38,3 +39,14 @@ class PermissionManager:
             return False
         print("All permissions granted ✅")
         return True
+
+
+def has_required_permissions() -> bool:
+    """
+    Helper used by the Kivy app.
+
+    Returns True only if all required permissions are granted.
+    For now it reads from permissions.json via PermissionManager.
+    """
+    manager = PermissionManager()
+    return manager.validate_permissions()

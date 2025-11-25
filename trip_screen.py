@@ -2,6 +2,8 @@
 import random
 import time
 from threading import Thread
+import json
+import os
 
 from kivy.app import App
 from kivy.clock import Clock
@@ -9,6 +11,9 @@ from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.button import Button
 from kivy.uix.label import Label
 from kivy.uix.screenmanager import Screen
+from kivy.uix.popup import Popup
+
+from permissions_manager import has_required_permissions
 
 
 class TripRecordingScreen(Screen):
@@ -50,6 +55,8 @@ class TripRecordingScreen(Screen):
             background_color=(0.55, 0.0, 0.0, 1),
             on_press=self._stop_clicked
         )
+        # Initially you can't stop a trip that hasn't started
+        self.stop_btn.disabled = True
 
         controls.add_widget(self.start_btn)
         controls.add_widget(self.stop_btn)
@@ -60,18 +67,30 @@ class TripRecordingScreen(Screen):
         # Tracking telemetry state
         self.running = False
         self._thread = None
-        self.samples = []  # ⬅ stores telemetry for trip summary
+        self.samples = []  # stores telemetry for trip summary
+
+        # auto-save every 5 seconds
+        Clock.schedule_interval(self.auto_save, 5)
 
     # ------------------------------------------------------
     # START BUTTON
     # ------------------------------------------------------
     def _start_clicked(self, *_):
+        # Already running? ignore extra taps
         if self.running:
+            return
+
+        # ✅ Check permissions before starting trip
+        if not has_required_permissions():
+            self.show_permission_error()
             return
 
         self.running = True
         self.samples = []              # reset previous trip
+
         self.start_btn.text = "🔵 Recording…"
+        self.start_btn.disabled = True
+        self.stop_btn.disabled = False
 
         # Start background thread for telemetry
         self._thread = Thread(target=self.update_telemetry, daemon=True)
@@ -81,8 +100,18 @@ class TripRecordingScreen(Screen):
     # STOP BUTTON → Go to Summary
     # ------------------------------------------------------
     def _stop_clicked(self, *_):
+        # If not recording, ignore
+        if not self.running:
+            return
+
         self.running = False
         self.start_btn.text = "▶️ Start Trip"
+        self.start_btn.disabled = False
+        self.stop_btn.disabled = True
+
+        # DELETE autosave file if it exists
+        if os.path.exists("autosave.json"):
+            os.remove("autosave.json")
 
         # Format samples for trip summary screen
         summary_samples = []
@@ -101,6 +130,37 @@ class TripRecordingScreen(Screen):
         # Navigate to summary
         self.manager.transition.direction = "left"
         self.manager.current = "trip_summary"
+
+    # ------------------------------------------------------
+    # PERMISSION ERROR POPUP
+    # ------------------------------------------------------
+    def show_permission_error(self):
+        """
+        Show a popup explaining that location/motion permissions are required.
+        """
+        box = BoxLayout(orientation="vertical", padding=20, spacing=10)
+
+        msg = Label(
+            text="Location and motion permissions are required to start a trip.\n"
+                 "Please enable them in settings or permissions.json.",
+            halign="center"
+        )
+        msg.bind(size=lambda *_: setattr(msg, "text_size", msg.size))
+
+        btn_ok = Button(text="OK", size_hint_y=None, height=40)
+
+        box.add_widget(msg)
+        box.add_widget(btn_ok)
+
+        popup = Popup(
+            title="Permissions Required",
+            content=box,
+            size_hint=(0.8, 0.4),
+            auto_dismiss=False
+        )
+
+        btn_ok.bind(on_press=popup.dismiss)
+        popup.open()
 
     # ------------------------------------------------------
     # TELEMETRY SIMULATION LOOP
@@ -143,3 +203,33 @@ class TripRecordingScreen(Screen):
         self.accel_label.text = f"🪶 Accelerometer → X={ax}, Y={ay}, Z={az}"
         self.gyro_label.text = f"⚙️ Gyroscope → X={gx}, Y={gy}, Z={gz}"
         self.gps_label.text = f"🛰 GPS → Lat={lat}, Lon={lon}"
+
+    # ------------------------------------------------------
+    # AUTO-SAVE FUNCTION
+    # ------------------------------------------------------
+    def auto_save(self, *args):
+        """Automatically save the current telemetry readings to autosave.json."""
+        if not self.running:
+            return  # Only auto-save when trip is running
+
+        trip_data = {
+            "accel": self.accel_label.text,
+            "gyro": self.gyro_label.text,
+            "gps": self.gps_label.text,
+            "samples": self.samples
+        }
+
+        with open("autosave.json", "w") as f:
+            json.dump(trip_data, f)
+
+        print("Auto-saved trip data.")
+
+    # ------------------------------------------------------
+    # LOAD SAVED TRIP (for resume)
+    # ------------------------------------------------------
+    def load_saved_trip(self):
+        """Load previously saved data if available."""
+        if os.path.exists("autosave.json"):
+            with open("autosave.json", "r") as f:
+                return json.load(f)
+        return None
