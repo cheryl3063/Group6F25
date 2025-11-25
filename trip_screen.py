@@ -72,6 +72,9 @@ class TripRecordingScreen(Screen):
         # auto-save every 5 seconds
         Clock.schedule_interval(self.auto_save, 5)
 
+        # auto-save every 5 seconds
+        Clock.schedule_interval(self.auto_save,5)
+
     # ------------------------------------------------------
     # START BUTTON
     # ------------------------------------------------------
@@ -108,6 +111,10 @@ class TripRecordingScreen(Screen):
         self.start_btn.text = "▶️ Start Trip"
         self.start_btn.disabled = False
         self.stop_btn.disabled = True
+
+        # DELETE autosave file if it exists
+        if os.path.exists("autosave.json"):
+            os.remove("autosave.json")
 
         # DELETE autosave file if it exists
         if os.path.exists("autosave.json"):
