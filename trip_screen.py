@@ -5,7 +5,6 @@ from threading import Thread
 import json
 import os
 
-from kivy.app import App
 from kivy.clock import Clock
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.button import Button
@@ -79,7 +78,10 @@ class TripRecordingScreen(Screen):
         # Tracking telemetry state
         self.running = False
         self._thread = None
-        self.samples = []  # stores telemetry for trip summary
+
+        # Raw samples for this trip
+        # Each element looks like: {"speed": ..., "brake": ..., "harsh": ..., "dist": ...}
+        self.samples = []
 
         # auto-save every 5 seconds
         Clock.schedule_interval(self.auto_save, 5)
@@ -148,7 +150,9 @@ class TripRecordingScreen(Screen):
         if os.path.exists("autosave.json"):
             os.remove("autosave.json")
 
-        # Format samples for trip summary screen
+        # --------------------------------------------------
+        # 🔥 TASK 74: Build CLEAN sample list for summary
+        # --------------------------------------------------
         summary_samples = []
         for s in self.samples:
             summary_samples.append({
@@ -158,11 +162,11 @@ class TripRecordingScreen(Screen):
                 "distance_km": s["dist"]
             })
 
-        # If no samples were collected, still handle gracefully
+        # Even if no samples, still handle gracefully
         if not summary_samples:
             print("No samples recorded for this trip.")
 
-        # Send data to summary screen
+        # Send data to summary screen (Tonse's part)
         trip_summary = self.manager.get_screen("trip_summary")
         trip_summary.set_samples(summary_samples)
 
@@ -217,7 +221,7 @@ class TripRecordingScreen(Screen):
             lat = round(43.45 + random.uniform(-0.001, 0.001), 6)
             lon = round(-80.49 + random.uniform(-0.001, 0.001), 6)
 
-            # Fake additional metrics for summary
+            # Fake additional metrics for summary (raw form)
             sample = {
                 "speed": random.randint(30, 90),
                 "brake": random.choice([0, 0, 1]),
