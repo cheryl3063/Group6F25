@@ -30,6 +30,18 @@ class TripRecordingScreen(Screen):
         )
         self.layout.add_widget(self.title)
 
+        # ❗ Error label for permission issues
+        self.error_label = Label(
+            text="",
+            font_size=16,
+            color=(1, 0, 0, 1),  # red
+            halign="center"
+        )
+        self.error_label.bind(
+            size=lambda *_: setattr(self.error_label, "text_size", self.error_label.size)
+        )
+        self.layout.add_widget(self.error_label)
+
         # Labels for telemetry
         self.accel_label = Label(text="🪶 Accelerometer → Waiting for data...", font_size=18)
         self.gyro_label = Label(text="⚙️ Gyroscope → Waiting for data...", font_size=18)
@@ -72,9 +84,6 @@ class TripRecordingScreen(Screen):
         # auto-save every 5 seconds
         Clock.schedule_interval(self.auto_save, 5)
 
-        # auto-save every 5 seconds
-        Clock.schedule_interval(self.auto_save,5)
-
     # ------------------------------------------------------
     # START BUTTON
     # ------------------------------------------------------
@@ -85,8 +94,13 @@ class TripRecordingScreen(Screen):
 
         # ✅ Check permissions before starting trip
         if not has_required_permissions():
+            # Show error text + popup
+            self.error_label.text = "⚠ Permission required: enable Location + Motion to start a trip."
             self.show_permission_error()
             return
+        else:
+            # Clear any previous error
+            self.error_label.text = ""
 
         self.running = True
         self.samples = []              # reset previous trip
@@ -112,9 +126,8 @@ class TripRecordingScreen(Screen):
         self.start_btn.disabled = False
         self.stop_btn.disabled = True
 
-        # DELETE autosave file if it exists
-        if os.path.exists("autosave.json"):
-            os.remove("autosave.json")
+        # Clear error (if any)
+        self.error_label.text = ""
 
         # DELETE autosave file if it exists
         if os.path.exists("autosave.json"):
