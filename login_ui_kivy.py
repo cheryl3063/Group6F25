@@ -7,6 +7,7 @@ from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.textinput import TextInput
 from kivy.uix.button import Button
 from kivy.metrics import dp
+from kivy.graphics import Color, RoundedRectangle
 from kivy.uix.popup import Popup
 from kivy.uix.screenmanager import ScreenManager, Screen, FadeTransition
 
@@ -15,12 +16,13 @@ from trip_screen import TripRecordingScreen
 from trip_summary_screen import TripSummaryScreen
 from score_screen import ScoreScreen
 
+
 API_URL = "http://127.0.0.1:5050/login"
 
 
-# ---------------------------------------------------------
-# LOGIN SCREEN (cleaner layout + accessibility polish)
-# ---------------------------------------------------------
+# =====================================================================
+#                         LOGIN SCREEN
+# =====================================================================
 class LoginScreen(Screen):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -31,31 +33,24 @@ class LoginScreen(Screen):
             spacing=20
         )
 
-        # Title section
         root.add_widget(Label(
             text="🚗 Driver Analytics",
             font_size=32,
-            bold=True,
-            halign="center",
-            valign="middle",
+            bold=True
         ))
 
         root.add_widget(Label(
             text="Sign in to continue",
             font_size=20,
-            color=(0.8, 0.8, 0.8, 1),
-            halign="center"
+            color=(0.8, 0.8, 0.8, 1)
         ))
 
-        # Inputs
         self.email_input = TextInput(
             hint_text="Email Address",
             multiline=False,
             size_hint_y=None,
             height=55,
             font_size=18,
-            padding_y=(14, 14),
-            background_normal='',
             background_color=(0.15, 0.15, 0.15, 1),
             foreground_color=(1, 1, 1, 1),
             cursor_color=(0.2, 0.6, 1, 1),
@@ -68,8 +63,6 @@ class LoginScreen(Screen):
             size_hint_y=None,
             height=55,
             font_size=18,
-            padding_y=(14, 14),
-            background_normal='',
             background_color=(0.15, 0.15, 0.15, 1),
             foreground_color=(1, 1, 1, 1),
             cursor_color=(0.2, 0.6, 1, 1),
@@ -78,24 +71,20 @@ class LoginScreen(Screen):
         root.add_widget(self.email_input)
         root.add_widget(self.password_input)
 
-        # Login button
         login_btn = Button(
             text="Sign In",
             size_hint_y=None,
             height=55,
             font_size=20,
             bold=True,
-            background_normal='',
             background_color=(0.1, 0.5, 1, 1),
         )
         login_btn.bind(on_press=self.handle_login)
-        root.add_widget(login_btn)
 
+        root.add_widget(login_btn)
         self.add_widget(root)
 
-    # ------------------------------------------------------
-    # Login Logic (unchanged)
-    # ------------------------------------------------------
+    # ---------------- LOGIN ----------------
     def handle_login(self, instance):
         email = self.email_input.text.strip()
         password = self.password_input.text.strip()
@@ -106,7 +95,6 @@ class LoginScreen(Screen):
         if not email.endswith("@gmail.com"):
             return self.show_popup("Invalid Email", "Email must end with @gmail.com.")
 
-        # TEMP bypass for UI testing
         print("🔓 Demo mode: bypassing login.")
         self.manager.current = "dashboard"
 
@@ -119,79 +107,103 @@ class LoginScreen(Screen):
         popup.open()
 
 
-# ---------------------------------------------------------
-# DASHBOARD SCREEN (same as before, but nicer visuals)
-# ---------------------------------------------------------
+# =====================================================================
+#                         DASHBOARD SCREEN
+# =====================================================================
 class DashboardScreen(Screen):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
-        layout = BoxLayout(orientation='vertical', padding=25, spacing=20)
-        self.label = Label(text="Welcome!", font_size=24)
-        layout.add_widget(self.label)
+        # Root
+        root = BoxLayout(
+            orientation='vertical',
+            padding=dp(20),
+            spacing=dp(20)
+        )
 
-        btn_trip = Button(text="🚗 Start Trip Recording", height=45, size_hint_y=None)
-        btn_trip.bind(on_press=self.go_trip)
-        layout.add_widget(btn_trip)
+        # Card container
+        card = BoxLayout(
+            orientation='vertical',
+            spacing=dp(18),
+            padding=dp(25),
+            size_hint=(0.9, 0.8),
+            pos_hint={"center_x": 0.5, "center_y": 0.5}
+        )
 
-        btn_analytics = Button(text="📊 View Analytics", height=45, size_hint_y=None)
-        btn_analytics.bind(on_press=self.go_analytics)
-        layout.add_widget(btn_analytics)
+        # Glass background
+        with card.canvas.before:
+            Color(1, 1, 1, 0.08)
+            self.card_bg = RoundedRectangle(radius=[25])
 
-        # ⭐ NEW BUTTON
-        btn_summary = Button(text="📄 Trip Summary", height=45, size_hint_y=None)
+        def update_bg(*_):
+            self.card_bg.pos = card.pos
+            self.card_bg.size = card.size
+
+        card.bind(pos=update_bg, size=update_bg)
+
+        # Title
+        title = Label(
+            text="🏠 Dashboard",
+            font_size=32,
+            bold=True,
+            color=(1, 1, 1, 1)
+        )
+        card.add_widget(title)
+
+        # BUTTON FACTORY → with custom rounded background
+        def make_button(text, icon):
+            btn = Button(
+                text=f"{icon}  {text}",
+                font_size=20,
+                size_hint_y=None,
+                height=dp(60),
+                background_normal='',
+                background_color=(0.18, 0.18, 0.18, 0.85),
+                color=(1, 1, 1, 1),
+                bold=True,
+            )
+
+            # Rounded background
+            with btn.canvas.before:
+                Color(0.18, 0.18, 0.18, 0.85)
+                btn._bg = RoundedRectangle(radius=[20])
+
+            def update_btn_bg(*_):
+                btn._bg.pos = btn.pos
+                btn._bg.size = btn.size
+
+            btn.bind(pos=update_btn_bg, size=update_btn_bg)
+            return btn
+
+        # Buttons
+        btn_trip = make_button("Start Trip Recording", "🚗")
+        btn_analytics = make_button("View Analytics", "📊")
+        btn_summary = make_button("Trip Summary", "📄")
+        btn_score = make_button("View Score", "⭐")
+        btn_logout = make_button("Logout", "🔒")
+
+        # Bind navigation
+        btn_trip.bind(on_press=lambda *_: setattr(self.manager, "current", "trip"))
+        btn_analytics.bind(on_press=lambda *_: setattr(self.manager, "current", "analytics"))
         btn_summary.bind(on_press=lambda *_: setattr(self.manager, "current", "trip_summary"))
-        layout.add_widget(btn_summary)
+        btn_score.bind(on_press=lambda *_: setattr(self.manager, "current", "score"))
+        btn_logout.bind(on_press=lambda *_: setattr(self.manager, "current", "login"))
 
-        btn_score = Button(text="⭐ View Score", height=45, size_hint_y=None)
-        btn_score.bind(on_press=self.go_score)
-        layout.add_widget(btn_score)
+        # Add buttons
+        card.add_widget(btn_trip)
+        card.add_widget(btn_analytics)
+        card.add_widget(btn_summary)
+        card.add_widget(btn_score)
+        card.add_widget(btn_logout)
 
-        btn_logout = Button(text="🔒 Logout", height=45, size_hint_y=None)
-        btn_logout.bind(on_press=self.logout)
-        layout.add_widget(btn_logout)
-
-        self.add_widget(layout)
-
-
-    # -------------------------------
-    #   MISSING METHODS (ADD THESE)
-    # -------------------------------
-    def go_trip(self, *args):
-        self.manager.current = "trip"
-
-    def go_analytics(self, *args):
-        self.manager.current = "analytics"
-
-    def go_score(self, *args):
-        self.manager.current = "score"
-
-    def logout(self, *args):
-        self.manager.current = "login"
+        root.add_widget(card)
+        self.add_widget(root)
 
 
-        # Create a container for rounded card
-        container = BoxLayout(padding=dp(10))
-        with container.canvas.before:
-            from kivy.graphics import Color, RoundedRectangle
-            Color(0.15, 0.15, 0.15, 1)  # soft dark grey card
-            self.bg_card = RoundedRectangle(radius=[20])
-
-        # Auto-update card size
-        def update_card(*args):
-            self.bg_card.pos = container.pos
-            self.bg_card.size = container.size
-
-        container.bind(pos=update_card, size=update_card)
-
-        container.add_widget(self.layout)
-        self.add_widget(container)
-
-# ---------------------------------------------------------
-# MAIN APP
-# ---------------------------------------------------------
+# =====================================================================
+#                           MAIN APP
+# =====================================================================
 class DriverApp(App):
-
     def build(self):
         sm = ScreenManager(transition=FadeTransition())
 
