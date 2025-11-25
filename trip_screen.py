@@ -30,7 +30,7 @@ class TripRecordingScreen(Screen):
         )
         self.layout.add_widget(self.title)
 
-        # ❗ Error label for permission issues
+        # Error label (for permissions / flow issues)
         self.error_label = Label(
             text="",
             font_size=16,
@@ -88,7 +88,10 @@ class TripRecordingScreen(Screen):
     # START BUTTON
     # ------------------------------------------------------
     def _start_clicked(self, *_):
-        # Already running? ignore extra taps
+        """
+        Start a new trip if not already recording and permissions are valid.
+        """
+        # Already running? ignore extra taps → prevents double-start
         if self.running:
             return
 
@@ -102,9 +105,16 @@ class TripRecordingScreen(Screen):
             # Clear any previous error
             self.error_label.text = ""
 
+        # Reset previous trip state
         self.running = True
-        self.samples = []              # reset previous trip
+        self.samples = []
 
+        # Reset UI labels at the beginning of a new trip
+        self.accel_label.text = "🪶 Accelerometer → Reading..."
+        self.gyro_label.text = "⚙️ Gyroscope → Reading..."
+        self.gps_label.text = "🛰 GPS → Reading..."
+
+        # Update button states
         self.start_btn.text = "🔵 Recording…"
         self.start_btn.disabled = True
         self.stop_btn.disabled = False
@@ -117,11 +127,16 @@ class TripRecordingScreen(Screen):
     # STOP BUTTON → Go to Summary
     # ------------------------------------------------------
     def _stop_clicked(self, *_):
-        # If not recording, ignore
+        """
+        Stop the trip if currently recording and navigate to summary screen.
+        """
+        # If not recording, ignore → prevents invalid stop
         if not self.running:
             return
 
         self.running = False
+
+        # Update buttons back to idle state
         self.start_btn.text = "▶️ Start Trip"
         self.start_btn.disabled = False
         self.stop_btn.disabled = True
@@ -142,6 +157,10 @@ class TripRecordingScreen(Screen):
                 "harsh_accel": s["harsh"],
                 "distance_km": s["dist"]
             })
+
+        # If no samples were collected, still handle gracefully
+        if not summary_samples:
+            print("No samples recorded for this trip.")
 
         # Send data to summary screen
         trip_summary = self.manager.get_screen("trip_summary")
