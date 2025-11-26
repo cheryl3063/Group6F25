@@ -1,3 +1,4 @@
+# trip_screen.py
 from kivy.clock import Clock
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.button import Button
@@ -5,6 +6,9 @@ from kivy.uix.label import Label
 from kivy.uix.screenmanager import Screen
 import random, time, json, os
 from threading import Thread
+
+# NEW — import mock backend saving function
+from mock_backend import save_latest_trip
 
 
 class TripRecordingScreen(Screen):
@@ -53,13 +57,14 @@ class TripRecordingScreen(Screen):
 
         self.add_widget(self.layout)
 
-        # Tracking telemetry state
+        # State
         self.running = False
         self._thread = None
         self.samples = []
 
         Clock.schedule_interval(self.auto_save, 5)
 
+    # ------------------------------------------------------
     def _start_clicked(self, *_):
         if self.running:
             return
@@ -71,6 +76,7 @@ class TripRecordingScreen(Screen):
         self._thread = Thread(target=self.update_telemetry, daemon=True)
         self._thread.start()
 
+    # ------------------------------------------------------
     def _stop_clicked(self, *_):
         self.running = False
         self.start_btn.text = "▶️ Start Trip"
@@ -78,6 +84,7 @@ class TripRecordingScreen(Screen):
         if os.path.exists("autosave.json"):
             os.remove("autosave.json")
 
+        # Format raw samples into summary-friendly structure
         summary_samples = []
         for s in self.samples:
             summary_samples.append({
@@ -87,12 +94,20 @@ class TripRecordingScreen(Screen):
                 "distance_km": s["dist"]
             })
 
-        trip_summary = self.manager.get_screen("trip_summary")
-        trip_summary.set_samples(summary_samples)
+        # --- NEW: save latest trip to mock backend BEFORE opening summary ---
+        if summary_samples:
+            from trip_summary_utils import compute_summary
+            trip_summary_data = compute_summary(summary_samples)
+            save_latest_trip(trip_summary_data)
+
+        # Push data to summary screen
+        ts = self.manager.get_screen("trip_summary")
+        ts.set_samples(summary_samples)
 
         self.manager.transition.direction = "left"
         self.manager.current = "trip_summary"
 
+    # ------------------------------------------------------
     def update_telemetry(self):
         while self.running:
             ax, ay, az = [round(random.uniform(-9.8, 9.8), 2) for _ in range(3)]
@@ -109,17 +124,20 @@ class TripRecordingScreen(Screen):
             self.samples.append(sample)
 
             Clock.schedule_once(
-                lambda dt, ax=ax, ay=ay, az=az, gx=gx, gy=gy, gz=gz, lat=lat, lon=lon:
+                lambda dt, ax=ax, ay=ay, az=az,
+                gx=gx, gy=gy, gz=gz, lat=lat, lon=lon:
                 self.refresh_labels(ax, ay, az, gx, gy, gz, lat, lon)
             )
 
             time.sleep(1)
 
+    # ------------------------------------------------------
     def refresh_labels(self, ax, ay, az, gx, gy, gz, lat, lon):
         self.accel_label.text = f"🪶 Accelerometer → X={ax}, Y={ay}, Z={az}"
         self.gyro_label.text = f"⚙️ Gyroscope → X={gx}, Y={gy}, Z={gz}"
         self.gps_label.text = f"🛰 GPS → Lat={lat}, Lon={lon}"
 
+    # ------------------------------------------------------
     def auto_save(self, *args):
         if not self.running:
             return
@@ -134,7 +152,9 @@ class TripRecordingScreen(Screen):
         with open("autosave.json", "w") as f:
             json.dump(trip_data, f)
 
+    # ------------------------------------------------------
     def load_saved_trip(self):
+        """Load previous autosave (not backend)."""
         if os.path.exists("autosave.json"):
             with open("autosave.json", "r") as f:
                 return json.load(f)

@@ -1,34 +1,19 @@
+# mock_backend.py
 import json
 import os
 
-BACKEND_FILE = "mock_backend.json"
+MOCK_PATH = "mock_latest_trip.json"
 
 
-def save_score(user_id, score_data):
-    """
-    score_data example:
-    {
-        "score": 85,
-        "avg_speed": 67,
-        "distance_km": 12.4
-    }
-    """
-    # Load existing file or create new
-    if os.path.exists(BACKEND_FILE):
-        with open(BACKEND_FILE, "r") as f:
-            db = json.load(f)
-    else:
-        db = {}
+def save_latest_trip(summary_dict):
+    """Save the most recent trip summary to a mock JSON file."""
+    with open(MOCK_PATH, "w") as f:
+        json.dump(summary_dict, f, indent=4)
 
-    # Ensure user entry exists
-    if user_id not in db:
-        db[user_id] = []
 
-    # Add new score entry
-    db[user_id].append(score_data)
-
-    # Save back to file
-    with open(BACKEND_FILE, "w") as f:
-        json.dump(db, f, indent=4)
-
-    print(f"[MOCK BACKEND] Saved score for user {user_id}: {score_data}")
+def load_latest_trip():
+    """Load the most recent trip summary, if it exists."""
+    if not os.path.exists(MOCK_PATH):
+        return None
+    with open(MOCK_PATH, "r") as f:
+        return json.load(f)

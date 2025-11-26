@@ -143,6 +143,9 @@ class AnalyticsScreen(Screen):
         if self.running:
             self.update_data(0)
 
+    def on_pre_enter(self, *args):
+        if not self.running:
+            self.start_simulation()
     # Called by the App after stopping a trip
     def show_summary_popup(self):
         popup = Popup(

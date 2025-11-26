@@ -5,6 +5,7 @@ from kivy.uix.label import Label
 from kivy.uix.button import Button
 from kivy.metrics import dp
 from kivy.graphics import Color, RoundedRectangle
+from mock_backend import load_latest_trip
 
 
 class ScoreScreen(Screen):
@@ -46,7 +47,7 @@ class ScoreScreen(Screen):
         )
         card.add_widget(title)
 
-        # Score (big + colored)
+        # Main Score (big + colored)
         self.score_label = Label(
             text="--",
             font_size=70,
@@ -56,7 +57,7 @@ class ScoreScreen(Screen):
         )
         card.add_widget(self.score_label)
 
-        # Detail rows
+        # Detailed labels
         self.avg_speed_label = Label(font_size=22, color=(0.9, 0.9, 0.9, 1))
         self.distance_label = Label(font_size=22, color=(0.9, 0.9, 0.9, 1))
         self.brake_label = Label(font_size=22, markup=True)
@@ -82,10 +83,24 @@ class ScoreScreen(Screen):
         root.add_widget(card)
         self.add_widget(root)
 
-    # ========== MAIN SCORE UPDATE ==========
+
+    # Auto-refresh score whenever screen opens
+    def on_pre_enter(self, *args):
+        latest = load_latest_trip()
+        if latest:
+            self.update_score({
+                "score": latest["safety_score"],
+                "avg_speed": latest["avg_speed_kmh"],
+                "distance_km": latest["total_distance_km"],
+                "brake_events": latest["brake_events"],
+                "harsh_accel": latest["harsh_accel"]
+            })
+
+    # Main update method — called by Trip Summary
     def update_score(self, data):
         score = data["score"]
 
+        # score color logic
         if score >= 80:
             sc = "3CB043"  # green
         elif score >= 60:
@@ -98,12 +113,12 @@ class ScoreScreen(Screen):
         self.avg_speed_label.text = f"Avg Speed: {data['avg_speed']} km/h"
         self.distance_label.text = f"Distance: {data['distance_km']} km"
 
-        # braking colors
+        # braking color logic
         b = data["brake_events"]
         bc = "3CB043" if b == 0 else "F7C325" if b <= 2 else "D32F2F"
         self.brake_label.text = f"[color=#{bc}]Braking Events: {b}[/color]"
 
-        # harsh accel colors
+        # harsh accel color logic
         h = data["harsh_accel"]
         hc = "3CB043" if h == 0 else "F7C325" if h <= 2 else "D32F2F"
         self.accel_label.text = f"[color=#{hc}]Harsh Accel: {h}[/color]"
