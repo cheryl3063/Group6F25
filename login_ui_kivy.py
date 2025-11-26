@@ -11,12 +11,12 @@ from kivy.uix.popup import Popup
 from kivy.uix.screenmanager import ScreenManager, Screen, FadeTransition
 
 # Import other project modules
-import main
+import main  # (not strictly used but safe to keep if other parts rely on it)
 from analytics_screen import AnalyticsScreen
 from trip_screen import TripRecordingScreen
 from trip_summary_screen import TripSummaryScreen
 from sensors_listeners import SensorListener
-
+from trip_summary_utils import compute_summary  # ✅ used in receive_trip_summary
 
 API_URL = "http://127.0.0.1:5050/login"
 
@@ -67,7 +67,10 @@ class LoginScreen(Screen):
                 self.manager.transition.direction = "left"
                 self.manager.current = "dashboard"
             else:
-                msg = resp.json().get("error") or resp.text
+                try:
+                    msg = resp.json().get("error")
+                except Exception:
+                    msg = resp.text
                 self.show_popup("Error", msg)
 
         except requests.exceptions.RequestException as e:
@@ -91,7 +94,7 @@ class DashboardScreen(Screen):
         self.label = Label(text="Welcome!", font_size=24)
         self.layout.add_widget(self.label)
 
-        # Trip Summary Button
+        # Trip Summary Button (demo)
         btn_summary = Button(text="🧾 Generate Trip Summary", size_hint_y=None, height=45)
         btn_summary.bind(on_press=self.open_trip_summary)
         self.layout.add_widget(btn_summary)
@@ -129,6 +132,7 @@ class DashboardScreen(Screen):
         self.manager.current = "login"
 
     def open_trip_summary(self, *_):
+        # Demo data for manual summary
         samples = [
             {"speed": 42.0, "brake_events": 0, "harsh_accel": 0, "distance_km": 1.2},
             {"speed": 55.0, "brake_events": 1, "harsh_accel": 0, "distance_km": 2.0},
@@ -146,7 +150,8 @@ class DashboardScreen(Screen):
 class DriverApp(App):
 
     def build(self):
-        self.sensor_listener = SensorListener()  # ✅ Add sensor manager
+        self.sensor_listener = SensorListener()
+        self.user_id = "user123"
 
         sm = ScreenManager(transition=FadeTransition())
         sm.add_widget(LoginScreen(name="login"))
@@ -157,14 +162,46 @@ class DriverApp(App):
 
         return sm
 
-    # Called from TripRecordingScreen
+    # Called from TripRecordingScreen (optional if you hook sensors)
     def start_trip_recording(self):
         print("DriverApp → Starting sensors...")
-        self.sensor_listener.start_listeners()
+        try:
+            self.sensor_listener.start_listeners()
+        except Exception as e:
+            print(f"[Sensors] Error starting listeners: {e}")
 
     def stop_trip_recording(self):
         print("DriverApp → Stopping sensors...")
-        self.sensor_listener.stop_listeners()
+        try:
+            self.sensor_listener.stop_listeners()
+        except Exception as e:
+            print(f"[Sensors] Error stopping listeners: {e}")
+
+    # -----------------------------------------------------
+    # REQUIRED BY TripRecordingScreen → fixes the crash
+    # -----------------------------------------------------
+    def receive_trip_summary(self, samples):
+        """
+        Called from TripRecordingScreen._stop_clicked()
+        after a trip finishes.
+        """
+        print("\n=== App Received Raw Samples (from TripRecordingScreen) ===")
+        print(samples)
+        print("===========================================================\n")
+
+        # Optional: recompute summary for logging
+        summary = compute_summary(samples)
+        print("\n=== FINAL SUMMARY (driver app log) ===")
+        print(summary)
+        print("======================================\n")
+
+        # Send samples to trip summary screen
+        ts = self.root.get_screen("trip_summary")
+        ts.set_samples(samples)
+
+        # Navigate to summary screen
+        self.root.transition.direction = "left"
+        self.root.current = "trip_summary"
 
 
 if __name__ == "__main__":
