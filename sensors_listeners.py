@@ -3,6 +3,7 @@ import random
 import time
 from datetime import datetime
 
+
 class SensorListener:
     def __init__(self):
         self.is_active = False

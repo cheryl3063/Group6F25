@@ -5,12 +5,14 @@ from threading import Thread
 import json
 import os
 
-from kivy.app import App
 from kivy.clock import Clock
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.button import Button
 from kivy.uix.label import Label
 from kivy.uix.screenmanager import Screen
+from kivy.uix.popup import Popup
+
+from permissions_manager import has_required_permissions
 
 
 class TripRecordingScreen(Screen):
@@ -26,6 +28,18 @@ class TripRecordingScreen(Screen):
             bold=True
         )
         self.layout.add_widget(self.title)
+
+        # Error label (for permissions / flow issues)
+        self.error_label = Label(
+            text="",
+            font_size=16,
+            color=(1, 0, 0, 1),  # red
+            halign="center"
+        )
+        self.error_label.bind(
+            size=lambda *_: setattr(self.error_label, "text_size", self.error_label.size)
+        )
+        self.layout.add_widget(self.error_label)
 
         # Labels for telemetry
         self.accel_label = Label(text="🪶 Accelerometer → Waiting for data...", font_size=18)
@@ -52,6 +66,8 @@ class TripRecordingScreen(Screen):
             background_color=(0.55, 0.0, 0.0, 1),
             on_press=self._stop_clicked
         )
+        # Initially you can't stop a trip that hasn't started
+        self.stop_btn.disabled = True
 
         controls.add_widget(self.start_btn)
         controls.add_widget(self.stop_btn)
@@ -62,21 +78,48 @@ class TripRecordingScreen(Screen):
         # Tracking telemetry state
         self.running = False
         self._thread = None
-        self.samples = []  # ⬅ stores telemetry for trip summary
+
+        # Raw samples for this trip
+        # Each element looks like: {"speed": ..., "brake": ..., "harsh": ..., "dist": ...}
+        self.samples = []
 
         # auto-save every 5 seconds
-        Clock.schedule_interval(self.auto_save,5)
+        Clock.schedule_interval(self.auto_save, 5)
 
     # ------------------------------------------------------
     # START BUTTON
     # ------------------------------------------------------
     def _start_clicked(self, *_):
+        """
+        Start a new trip if not already recording and permissions are valid.
+        """
+        # Already running? ignore extra taps → prevents double-start
         if self.running:
             return
 
+        # ✅ Check permissions before starting trip
+        if not has_required_permissions():
+            # Show error text + popup
+            self.error_label.text = "⚠ Permission required: enable Location + Motion to start a trip."
+            self.show_permission_error()
+            return
+        else:
+            # Clear any previous error
+            self.error_label.text = ""
+
+        # Reset previous trip state
         self.running = True
-        self.samples = []              # reset previous trip
+        self.samples = []
+
+        # Reset UI labels at the beginning of a new trip
+        self.accel_label.text = "🪶 Accelerometer → Reading..."
+        self.gyro_label.text = "⚙️ Gyroscope → Reading..."
+        self.gps_label.text = "🛰 GPS → Reading..."
+
+        # Update button states
         self.start_btn.text = "🔵 Recording…"
+        self.start_btn.disabled = True
+        self.stop_btn.disabled = False
 
         # Start background thread for telemetry
         self._thread = Thread(target=self.update_telemetry, daemon=True)
@@ -86,14 +129,30 @@ class TripRecordingScreen(Screen):
     # STOP BUTTON → Go to Summary
     # ------------------------------------------------------
     def _stop_clicked(self, *_):
+        """
+        Stop the trip if currently recording and navigate to summary screen.
+        """
+        # If not recording, ignore → prevents invalid stop
+        if not self.running:
+            return
+
         self.running = False
+
+        # Update buttons back to idle state
         self.start_btn.text = "▶️ Start Trip"
+        self.start_btn.disabled = False
+        self.stop_btn.disabled = True
+
+        # Clear error (if any)
+        self.error_label.text = ""
 
         # DELETE autosave file if it exists
         if os.path.exists("autosave.json"):
             os.remove("autosave.json")
 
-        # Format samples for trip summary screen
+        # --------------------------------------------------
+        # 🔥 TASK 74: Build CLEAN sample list for summary
+        # --------------------------------------------------
         summary_samples = []
         for s in self.samples:
             summary_samples.append({
@@ -103,13 +162,48 @@ class TripRecordingScreen(Screen):
                 "distance_km": s["dist"]
             })
 
-        # Send data to summary screen
+        # Even if no samples, still handle gracefully
+        if not summary_samples:
+            print("No samples recorded for this trip.")
+
+        # Send data to summary screen (Tonse's part)
         trip_summary = self.manager.get_screen("trip_summary")
         trip_summary.set_samples(summary_samples)
 
         # Navigate to summary
         self.manager.transition.direction = "left"
         self.manager.current = "trip_summary"
+
+    # ------------------------------------------------------
+    # PERMISSION ERROR POPUP
+    # ------------------------------------------------------
+    def show_permission_error(self):
+        """
+        Show a popup explaining that location/motion permissions are required.
+        """
+        box = BoxLayout(orientation="vertical", padding=20, spacing=10)
+
+        msg = Label(
+            text="Location and motion permissions are required to start a trip.\n"
+                 "Please enable them in settings or permissions.json.",
+            halign="center"
+        )
+        msg.bind(size=lambda *_: setattr(msg, "text_size", msg.size))
+
+        btn_ok = Button(text="OK", size_hint_y=None, height=40)
+
+        box.add_widget(msg)
+        box.add_widget(btn_ok)
+
+        popup = Popup(
+            title="Permissions Required",
+            content=box,
+            size_hint=(0.8, 0.4),
+            auto_dismiss=False
+        )
+
+        btn_ok.bind(on_press=popup.dismiss)
+        popup.open()
 
     # ------------------------------------------------------
     # TELEMETRY SIMULATION LOOP
@@ -127,7 +221,7 @@ class TripRecordingScreen(Screen):
             lat = round(43.45 + random.uniform(-0.001, 0.001), 6)
             lon = round(-80.49 + random.uniform(-0.001, 0.001), 6)
 
-            # Fake additional metrics for summary
+            # Fake additional metrics for summary (raw form)
             sample = {
                 "speed": random.randint(30, 90),
                 "brake": random.choice([0, 0, 1]),
@@ -182,4 +276,3 @@ class TripRecordingScreen(Screen):
             with open("autosave.json", "r") as f:
                 return json.load(f)
         return None
-
