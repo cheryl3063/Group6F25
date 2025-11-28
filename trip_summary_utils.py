@@ -5,11 +5,19 @@ from alert_rules import AlertRules
 # shared instance (for Task 55–57)
 alert_system = AlertRules()
 
+
 def compute_summary(samples):
     """
     samples: list of dicts like
-      {"speed": 52.3, "brake_events": 1, "harsh_accel": 0, "distance_km": 1.8}
-    Returns a summary dict containing distance, speed, events, safety score, and low-score alert.
+      {
+        "speed": 52.3,
+        "brake_events": 1,
+        "harsh_accel": 0,
+        "speeding_events": 0 or 1 (optional),
+        "distance_km": 1.8
+      }
+    Returns a summary dict containing distance, speed, events, safety score,
+    low-score alert flag, and alert breakdown.
     """
 
     # ---------- HANDLE EMPTY OR INVALID ----------
@@ -20,7 +28,12 @@ def compute_summary(samples):
             "brake_events": 0,
             "harsh_accel": 0,
             "safety_score": 100,
-            "low_score_alert": False
+            "low_score_alert": False,
+            "alerts": {
+                "brakes": 0,
+                "harsh_accel": 0,
+                "speeding": 0
+            }
         }
 
     # Filter out invalid samples
@@ -32,7 +45,12 @@ def compute_summary(samples):
             "brake_events": 0,
             "harsh_accel": 0,
             "safety_score": 100,
-            "low_score_alert": False
+            "low_score_alert": False,
+            "alerts": {
+                "brakes": 0,
+                "harsh_accel": 0,
+                "speeding": 0
+            }
         }
 
     # ---------- COMPUTE RAW VALUES ----------
@@ -42,10 +60,11 @@ def compute_summary(samples):
     avg_speed = sum(float(s.get("speed", 0) or 0) for s in samples) / n
     brakes = sum(int(s.get("brake_events", 0) or 0) for s in samples)
     harsh = sum(int(s.get("harsh_accel", 0) or 0) for s in samples)
+    speeding = sum(int(s.get("speeding_events", 0) or 0) for s in samples)
 
     # ---------- PREPARE SCORE INPUT ----------
     trip_data = {
-        "speeding_events": 0,
+        "speeding_events": speeding,
         "harsh_brakes": brakes,
         "harsh_accels": harsh,
         "avg_speed": avg_speed,
@@ -56,16 +75,25 @@ def compute_summary(samples):
     # Calculate the proper safety score
     score = calculate_score(trip_data)
 
+    # Build alerts dict once
+    alerts = {
+        "brakes": int(brakes),
+        "harsh_accel": int(harsh),
+        "speeding": int(speeding)
+    }
+
     # ---------- SAVE TO MOCK BACKEND ----------
     save_score("user123", {
-        "score": score,
+        "score": int(score),
         "avg_speed": round(avg_speed, 1),
         "distance_km": round(total_dist, 2),
         "brake_events": int(brakes),
-        "harsh_accel": int(harsh)
+        "harsh_accel": int(harsh),
+        "speeding_events": int(speeding),
+        "alerts": alerts
     })
 
-    # ---------- TASK 55–57: LOW SCORE ALERT ----------
+    # ---------- LOW SCORE ALERT ----------
     low_score_alert = alert_system.evaluate_score(score)
 
     # ---------- RETURN COMBINED SUMMARY ----------
@@ -75,5 +103,6 @@ def compute_summary(samples):
         "brake_events": int(brakes),
         "harsh_accel": int(harsh),
         "safety_score": int(score),
-        "low_score_alert": low_score_alert
+        "low_score_alert": low_score_alert,
+        "alerts": alerts
     }

@@ -11,6 +11,7 @@ from kivy.core.audio import SoundLoader
 from trip_summary_utils import compute_summary
 from alert_rules import AlertRules
 
+
 class TripSummaryScreen(Screen):
     LOW_SCORE_THRESHOLD = 50
 
@@ -28,19 +29,21 @@ class TripSummaryScreen(Screen):
             font_size=26,
             markup=True,
             size_hint_y=None,
-            height=dp(40)
+            height=dp(40),
+            halign="center"
         )
         root.add_widget(self.title)
 
         center = AnchorLayout()
         root.add_widget(center)
 
+        # Summary card
         card = BoxLayout(
             orientation="vertical",
             padding=dp(20),
-            spacing=dp(10),
-            size_hint=(0.7, None),
-            height=dp(220),
+            spacing=dp(12),
+            size_hint=(0.75, None),
+            height=dp(350),
             pos_hint={"center_x": 0.5},
         )
 
@@ -51,6 +54,7 @@ class TripSummaryScreen(Screen):
 
         card.bind(pos=self._update_bg, size=self._update_bg)
 
+        # MAIN METRICS TEXT
         self.metrics = Label(
             text="[i]No data yet.[/i]",
             font_size=18,
@@ -59,12 +63,24 @@ class TripSummaryScreen(Screen):
             valign="top",
             text_size=(dp(300), None),
         )
-        self.metrics.bind(
-            size=lambda *_: setattr(self.metrics, "text_size", (self.metrics.width, None))
-        )
+        self.metrics.bind(size=lambda *_: setattr(self.metrics, "text_size", (self.metrics.width, None)))
         card.add_widget(self.metrics)
+
+        # ALERT SUMMARY SECTION (OPTION A)
+        self.alert_section = Label(
+            text="[b]--- Alerts for This Trip ---[/b]\n[i]No alerts yet.[/i]",
+            font_size=17,
+            markup=True,
+            halign="left",
+            valign="top",
+            text_size=(dp(300), None),
+        )
+        self.alert_section.bind(size=lambda *_: setattr(self.alert_section, "text_size", (self.alert_section.width, None)))
+        card.add_widget(self.alert_section)
+
         center.add_widget(card)
 
+        # BUTTON ROW
         btn_row = BoxLayout(size_hint_y=None, height=dp(50), spacing=dp(10), padding=[dp(50), 0])
         self.btn_back = Button(text="⬅ Back")
         self.btn_back.bind(on_press=self._go_back)
@@ -90,13 +106,10 @@ class TripSummaryScreen(Screen):
         self.samples = samples or []
         self._render()
 
-    # ---------------------------------------------------------
-    #  TASK 58 — Save trip summary to trip_summary.json
-    # ---------------------------------------------------------
+    # ----------------- SAVE FINAL SUMMARY -----------------
     def _save_final_summary(self, summary):
         FILE = "trip_summary.json"
 
-        # Load existing file or create new list
         if os.path.exists(FILE):
             try:
                 with open(FILE, "r") as f:
@@ -108,22 +121,18 @@ class TripSummaryScreen(Screen):
         else:
             data = []
 
-        # Append new summary
         data.append(summary)
 
-        # Save it back
         with open(FILE, "w") as f:
             json.dump(data, f, indent=4)
 
         print("✔ Trip summary saved to trip_summary.json")
 
-    # ---------------------------------------------------------
-    #  Render summary + alerts + save summary
-    # ---------------------------------------------------------
+    # ----------------- RENDER FULL SUMMARY -----------------
     def _render(self):
         s = compute_summary(self.samples)
 
-        # Update metrics box
+        # ---------- MAIN SUMMARY ----------
         self.metrics.text = (
             f"• Distance: {s['total_distance_km']} km\n"
             f"• Avg Speed: {s['avg_speed_kmh']} km/h\n"
@@ -132,26 +141,39 @@ class TripSummaryScreen(Screen):
             f"⭐ [b]Safety Score: {s['safety_score']}[/b]"
         )
 
-        # ---- LOW SCORE ALERT (Task 55 + 56) ----
-        try:
-            score = float(s["safety_score"])
-            if self.alert_rules.evaluate_score(score):
+        # ---------- ALERT SUMMARY (OPTION A) ----------
+        speeding = s.get("speeding_events", 0)
+        brakes = s.get("brake_events", 0)
+        harsh = s.get("harsh_accel", 0)
 
-                # play sound
-                if self.alert_sound:
-                    self.alert_sound.play()
+        total_alerts = speeding + brakes + harsh
 
-                popup = Popup(
-                    title="⚠️ Low Safety Score",
-                    content=Label(
-                        text=f"Your safety score is {score}. Drive more carefully!",
-                        font_size=18
-                    ),
-                    size_hint=(0.6, 0.35)
-                )
-                popup.open()
-        except:
-            pass
+        self.alert_section.text = (
+            "[b]--- Alerts for This Trip ---[/b]\n"
+            f"🚨 Speeding: {speeding}\n"
+            f"🛑 Braking: {brakes}\n"
+            f"⚡ Harsh Accel: {harsh}\n"
+            f"📊 Total Alerts: {total_alerts}"
+        )
 
-        # ---- TASK 58 → SAVE THIS SUMMARY ----
+        # ---------- LOW SCORE ALERT ----------
+        score = int(s["safety_score"])
+        if self.alert_rules.evaluate_score(score):
+            if self.alert_sound:
+                self.alert_sound.play()
+
+            popup = Popup(
+                title="⚠️ Low Safety Score",
+                content=Label(
+                    text=f"Your safety score is {score}. Drive more carefully!",
+                    font_size=18
+                ),
+                size_hint=(0.6, 0.35)
+            )
+            popup.open()
+
+            # Append warning to alert section
+            self.alert_section.text += "\n\n❗ [color=FF4444][b]Low Safety Score![/b][/color]"
+
+        # ---------- SAVE SUMMARY ----------
         self._save_final_summary(s)

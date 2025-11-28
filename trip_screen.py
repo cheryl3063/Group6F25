@@ -13,11 +13,13 @@ from kivy.uix.label import Label
 from kivy.uix.screenmanager import Screen
 from kivy.graphics import Color, Rectangle
 from kivy.animation import Animation   # <-- for banner animation
+from kivy.uix.label import Label
+
 
 
 class TripRecordingScreen(Screen):
 
-    SPEED_THRESHOLD = 85   # ---- TASK 82: SPEED ALERT THRESHOLD ----
+    SPEED_THRESHOLD = 85   # ---- SPEED ALERT THRESHOLD ----
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -25,7 +27,7 @@ class TripRecordingScreen(Screen):
         self.layout = BoxLayout(orientation="vertical", padding=25, spacing=15)
 
         # ------------------------------------------------------
-        # 🔔 TASK 81 — ALERT BANNER (yellow, at TOP)
+        # 🔔 ALERT BANNER (yellow, at TOP)
         # ------------------------------------------------------
         self.alert_label = Label(
             text="",
@@ -52,7 +54,6 @@ class TripRecordingScreen(Screen):
 
         # TOP of layout
         self.layout.add_widget(self.alert_label)
-        # ------------------------------------------------------
 
         # Title
         self.title = Label(
@@ -66,6 +67,70 @@ class TripRecordingScreen(Screen):
         self.accel_label = Label(text="🪶 Accelerometer → Waiting for data...", font_size=18)
         self.gyro_label = Label(text="⚙️ Gyroscope → Waiting for data...", font_size=18)
         self.gps_label = Label(text="🛰 GPS → Waiting for data...", font_size=18)
+
+        # -------------------------------
+        # TASK 2 — COUNTER BADGE UI ROW
+        # -------------------------------
+
+        # Counters (internal)
+        self.speeding_count = 0
+        self.brake_count = 0
+        self.harsh_count = 0
+
+        # Row container
+        self.counter_row = BoxLayout(
+            size_hint_y=None,
+            height=45,
+            spacing=10,
+            padding=[0, 5]
+        )
+
+        # Badge 1 — SPEEDING
+        self.badge_speeding = Label(
+            text="🚨 Speeding: 0",
+            font_size=16,
+            bold=True,
+            color=(1, 1, 1, 1)
+        )
+        with self.badge_speeding.canvas.before:
+            Color(0.8, 0.1, 0.1, 1)  # red
+            self.bg_speeding = Rectangle()
+
+        self.badge_speeding.bind(pos=self._update_speeding_bg, size=self._update_speeding_bg)
+
+        # Badge 2 — BRAKES
+        self.badge_brake = Label(
+            text="🛑 Brakes: 0",
+            font_size=16,
+            bold=True,
+            color=(1, 1, 1, 1)
+        )
+        with self.badge_brake.canvas.before:
+            Color(0.8, 0.4, 0, 1)  # orange
+            self.bg_brake = Rectangle()
+
+        self.badge_brake.bind(pos=self._update_brake_bg, size=self._update_brake_bg)
+
+        # Badge 3 — HARSH ACCEL
+        self.badge_harsh = Label(
+            text="⚡ Harsh: 0",
+            font_size=16,
+            bold=True,
+            color=(1, 1, 1, 1)
+        )
+        with self.badge_harsh.canvas.before:
+            Color(0.2, 0.5, 0.8, 1)  # blue
+            self.bg_harsh = Rectangle()
+
+        self.badge_harsh.bind(pos=self._update_harsh_bg, size=self._update_harsh_bg)
+
+        # Add badges to row
+        self.counter_row.add_widget(self.badge_speeding)
+        self.counter_row.add_widget(self.badge_brake)
+        self.counter_row.add_widget(self.badge_harsh)
+
+        # Add row to layout
+        self.layout.add_widget(self.counter_row)
 
         self.layout.add_widget(self.accel_label)
         self.layout.add_widget(self.gyro_label)
@@ -100,6 +165,7 @@ class TripRecordingScreen(Screen):
 
         self.speed_alert_triggered = False
 
+        # auto-save timer
         Clock.schedule_interval(self.auto_save, 5)
 
     # ------------------------------------------------------
@@ -109,26 +175,31 @@ class TripRecordingScreen(Screen):
         self.alert_bg.pos = instance.pos
         self.alert_bg.size = instance.size
 
+    def _update_speeding_bg(self, instance, value):
+        self.bg_speeding.pos = instance.pos
+        self.bg_speeding.size = instance.size
+
+    def _update_brake_bg(self, instance, value):
+        self.bg_brake.pos = instance.pos
+        self.bg_brake.size = instance.size
+
+    def _update_harsh_bg(self, instance, value):
+        self.bg_harsh.pos = instance.pos
+        self.bg_harsh.size = instance.size
+
     # ------------------------------------------------------
-    # SHOW ALERT WITH FADE + SLIDE + SOFT “BOUNCE”
+    # SHOW ALERT WITH FADE + SLIDE
     # ------------------------------------------------------
     def show_alert(self, message):
         self.alert_label.text = f"⚠ {message}"
 
-        # Start from current (TOP) position
         base_y = self.alert_label.y
 
-        # Make sure it's visible
         self.alert_label.opacity = 1
         self.alert_label.y = base_y
 
-        # After a delay, animate:
-        #  - slide up a bit
-        #  - then gently settle slightly lower
-        #  - fade out slowly
         def animate_fade(*_):
             up = Animation(y=base_y + 30, d=0.5, t="out_quad")
-            # then: settle slightly down + fade out slowly
             settle_and_fade = Animation(
                 y=base_y + 20,
                 opacity=0,
@@ -137,7 +208,6 @@ class TripRecordingScreen(Screen):
             )
             (up + settle_and_fade).start(self.alert_label)
 
-        # Keep banner visible
         Clock.schedule_once(animate_fade, 3.0)
 
     # ------------------------------------------------------
@@ -161,6 +231,14 @@ class TripRecordingScreen(Screen):
         self._thread = Thread(target=self.update_telemetry, daemon=True)
         self._thread.start()
 
+        self.speeding_count = 0
+        self.brake_count = 0
+        self.harsh_count = 0
+
+        self.badge_speeding.text = "🚨 Speeding: 0"
+        self.badge_brake.text = "🛑 Brakes: 0"
+        self.badge_harsh.text = "⚡ Harsh: 0"
+
     # ------------------------------------------------------
     # STOP TRIP
     # ------------------------------------------------------
@@ -168,15 +246,18 @@ class TripRecordingScreen(Screen):
         self.running = False
         self.start_btn.text = "▶️ Start Trip"
 
+        # clear autosave
         if os.path.exists("autosave.json"):
             os.remove("autosave.json")
 
+        # build summary samples
         summary_samples = []
         for s in self.samples:
             summary_samples.append({
                 "speed": s["speed"],
                 "brake_events": s["brake"],
                 "harsh_accel": s["harsh"],
+                "speeding_events": s.get("speeding", 0),
                 "distance_km": s["dist"]
             })
 
@@ -197,15 +278,36 @@ class TripRecordingScreen(Screen):
             lat = round(43.45 + random.uniform(-0.001, 0.001), 6)
             lon = round(-80.49 + random.uniform(-0.001, 0.001), 6)
 
+            # add braking / harsh / speeding to the sample
             sample = {
                 "speed": speed,
                 "brake": random.choice([0, 0, 1]),
                 "harsh": random.choice([0, 0, 1]),
+                "speeding": 1 if speed > self.SPEED_THRESHOLD else 0,
                 "dist": round(random.uniform(0.1, 0.4), 2),
             }
+
+            # SPEEDING COUNTER
+            if speed > self.SPEED_THRESHOLD:
+                self.speeding_count += 1
+                Clock.schedule_once(lambda dt: self.badge_speeding.setter("text")(self.badge_speeding,
+                                                                                  f"🚨 Speeding: {self.speeding_count}"))
+
+            # BRAKE COUNTER
+            if sample["brake"] == 1:
+                self.brake_count += 1
+                Clock.schedule_once(
+                    lambda dt: self.badge_brake.setter("text")(self.badge_brake, f"🛑 Brakes: {self.brake_count}"))
+
+            # HARSH ACCEL COUNTER
+            if sample["harsh"] == 1:
+                self.harsh_count += 1
+                Clock.schedule_once(
+                    lambda dt: self.badge_harsh.setter("text")(self.badge_harsh, f"⚡ Harsh: {self.harsh_count}"))
+
             self.samples.append(sample)
 
-            # ---- TASK 82 — DETECT HIGH SPEED ----
+            # detect high speed alert (UI only)
             if speed > self.SPEED_THRESHOLD and not self.speed_alert_triggered:
                 self.speed_alert_triggered = True
                 Clock.schedule_once(
@@ -218,7 +320,7 @@ class TripRecordingScreen(Screen):
                 lambda dt, ax=ax, ay=ay, az=az,
                        gx=gx, gy=gy, gz=gz, lat=lat, lon=lon:
                 self.refresh_labels(ax, ay, az, gx, gy, gz, lat, lon),
-                0  # forces refresh to run IMMEDIATELY
+                0
             )
 
             time.sleep(1)

@@ -1,16 +1,18 @@
-import random
+# analytics_screen.py
+import json
 import io
+from datetime import datetime
 import matplotlib.pyplot as plt
 
-from kivy.clock import Clock
 from kivy.core.window import Window
-from kivy.graphics.texture import Texture
+from kivy.core.image import Image as CoreImage
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.button import Button
 from kivy.uix.image import Image
 from kivy.uix.label import Label
-from kivy.uix.popup import Popup
 from kivy.uix.screenmanager import Screen
+
+from mock_backend import BACKEND_FILE
 
 Window.clearcolor = (0, 0, 0, 1)
 
@@ -18,143 +20,219 @@ Window.clearcolor = (0, 0, 0, 1)
 class AnalyticsScreen(Screen):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.running = False
-        self.update_event = None
 
-        self.layout = BoxLayout(orientation="vertical", spacing=15, padding=25)
+        self.layout = BoxLayout(orientation="vertical", padding=25, spacing=18)
+
+        # -------------------------
+        # TITLE
+        # -------------------------
         self.title = Label(
-            text="📊 Live Driver Analytics",
-            font_size=22,
-            bold=True,
-            color=(1, 1, 1, 1),
-            #font_name="EmojiFont",
+            text="[b][color=F5C542]📈 Driving Analytics Overview[/color][/b]",
+            font_size=26,
+            markup=True,
+            size_hint_y=None,
+            height=50,
         )
         self.layout.add_widget(self.title)
 
-        self.avg_speed_label = Label(
-            text="Average Speed: -- km/h",
-            font_size=16, color=(1, 1, 1, 1), #font_name="EmojiFont"
+        # -------------------------
+        # METRICS LABELS
+        # -------------------------
+        self.total_alerts_label = Label(
+            text="[i]Loading analytics...[/i]",
+            font_size=18,
+            color=(1, 1, 1, 1),
+            markup=True
         )
-        self.distance_label = Label(
-            text="Distance Travelled: -- km",
-            font_size=16, color=(1, 1, 1, 1), #font_name="EmojiFont"
-        )
-        self.score_label = Label(
-            text="Driver Score: --/100",
-            font_size=16, color=(1, 1, 1, 1), #font_name="EmojiFont"
-        )
+        self.layout.add_widget(self.total_alerts_label)
 
-        self.layout.add_widget(self.avg_speed_label)
-        self.layout.add_widget(self.distance_label)
-        self.layout.add_widget(self.score_label)
+        self.common_alert_label = Label(
+            text="",
+            font_size=18,
+            color=(1, 1, 1, 1),
+            markup=True
+        )
+        self.layout.add_widget(self.common_alert_label)
 
-        # Chart
-        self.chart = Image(size_hint=(1, 0.55))
+        self.last5_label = Label(
+            text="",
+            font_size=18,
+            color=(1, 1, 1, 1),
+            markup=True
+        )
+        self.layout.add_widget(self.last5_label)
+
+        # -------------------------
+        # BIGGER CHART AREA
+        # -------------------------
+        self.chart = Image(
+            size_hint=(1, None),
+            height=520,
+            allow_stretch=True,
+            keep_ratio=True
+        )
         self.layout.add_widget(self.chart)
 
-        # Buttons
-        self.run_button = Button(
-            text="▶️ Start Live Simulation",
-            font_size=16,
-            background_color=(0.0, 0.3, 0.6, 1),
-            #font_name="EmojiFont",
-            on_press=self.start_simulation,
+        # -------------------------
+        # BACK BUTTON
+        # -------------------------
+        back_btn = Button(
+            text="⬅ Back",
+            font_size=18,
+            background_color=(0.2, 0.2, 0.2, 1),
+            size_hint=(1, 0.15),
         )
-        self.stop_button = Button(
-            text="🛑 Stop Simulation",
-            font_size=16,
-            background_color=(0.3, 0, 0, 1),
-            #font_name="EmojiFont",
-            on_press=self.stop_simulation,
-        )
-        self.back_button = Button(
-            text="⬅️ Back to Trip",
-            font_size=16,
-            background_color=(0.15, 0.15, 0.15, 1),
-            #font_name="EmojiFont",
-            on_press=self.go_back,
-        )
+        back_btn.bind(on_press=lambda *_: setattr(self.manager, "current", "dashboard"))
+        self.layout.add_widget(back_btn)
 
-        self.layout.add_widget(self.run_button)
-        self.layout.add_widget(self.stop_button)
-        self.layout.add_widget(self.back_button)
         self.add_widget(self.layout)
 
-        Window.bind(on_resize=self.refresh_chart_size)
-
-    # ---------------- Simulation Logic ----------------
-    def start_simulation(self, *args):
-        if not self.running:
-            self.running = True
-            self.run_button.text = "🔵 Running..."
-            self.update_event = Clock.schedule_interval(self.update_data, 2.5)
-            self.update_data(0)
-
-    def stop_simulation(self, *args):
-        if self.running and self.update_event:
-            Clock.unschedule(self.update_event)
-            self.running = False
-            self.run_button.text = "▶️ Start Live Simulation"
-            self.show_summary_popup()
-
-    def go_back(self, *args):
-        if self.update_event:
-            Clock.unschedule(self.update_event)
-        # back to Trip screen
-        self.manager.current = "trip"
-
-    # ---------------- Chart and Analytics ----------------
-    def update_data(self, dt):
-        speeds = [random.randint(60, 130) for _ in range(12)]
-        avg_speed = round(sum(speeds) / len(speeds), 1)
-        distance = round(random.uniform(1, 25), 1)
-        overspeed = len([s for s in speeds if s > 120])
-        score = max(100 - overspeed * 5 - (avg_speed - 80) * 0.4, 0)
-
-        self.avg_speed_label.text = f"Average Speed: {avg_speed} km/h"
-        self.distance_label.text = f"Distance Travelled: {distance} km"
-        self.score_label.text = f"Driver Score: {score:.1f}/100"
-
-        # Generate chart to Texture
-        buf = io.BytesIO()
-        plt.figure(figsize=(9, 5), dpi=150)
-        plt.plot(speeds, marker='o', color='limegreen', linewidth=2)
-        plt.title(f"Speed vs Time ⏱️ | Score: {score:.1f}", fontsize=12, pad=10)
-        plt.xlabel("Time Interval", fontsize=10)
-        plt.ylabel("Speed (km/h)", fontsize=10)
-        plt.grid(True, linestyle='--', alpha=0.6)
-        plt.tight_layout()
-        plt.savefig(buf, format='png')
-        plt.close()
-
-        buf.seek(0)
-        # Use rgba texture; kivy will scale it in the Image widget
-        data = buf.read()
-        # Safe fallback: let Kivy load bytes by creating texture from image loader
-        tex = Texture.create(size=(900, 500))
+    # -------------------------
+    # LOAD TRIPS
+    # -------------------------
+    def load_trip_data(self):
         try:
-            tex.blit_buffer(data, colorfmt='luminance')  # keeps your original approach
-        except Exception:
-            pass
-        self.chart.texture = tex
+            with open(BACKEND_FILE, "r") as f:
+                db = json.load(f)
+            return db.get("user123", [])
+        except:
+            return []
 
-    def refresh_chart_size(self, *args):
-        if self.running:
-            self.update_data(0)
+    # -------------------------
+    # AGGREGATE ALERTS WEEKLY
+    # -------------------------
+    def safe_alerts(self, trip):
+        """Returns consistent alert values even if missing."""
+        alerts = trip.get("alerts") or {}
 
-    # Called by the App after stopping a trip
-    def show_summary_popup(self):
-        popup = Popup(
-            title="Trip Completed ✅",
-            content=Label(
-                text=("🚗 Trip Summary\n\n"
-                      "Average Speed: 85.7 km/h\n"
-                      "Distance: 21.7 km\n"
-                      "Driver Score: 92.7/100\n\n"
-                      "Session Duration: ~30s ⏱️"),
-                #font_name="EmojiFont",
-                color=(1, 1, 1, 1),
-            ),
-            size_hint=(0.75, 0.55),
+        return {
+            "speeding": alerts.get("speeding", 0) or 0,
+            "brakes": alerts.get("brakes", 0) or 0,
+            "harsh_accel": alerts.get("harsh_accel", 0) or 0,
+        }
+
+    def aggregate_weekly_alerts(self, trips):
+        weekly = {}
+
+        for trip in trips:
+            created_at = trip.get("created_at")
+            if not created_at:
+                continue
+
+            try:
+                date = datetime.fromisoformat(created_at)
+            except:
+                continue
+
+            year, week, _ = date.isocalendar()
+            key = f"{year}-W{week}"
+
+            a = self.safe_alerts(trip)
+            weekly[key] = weekly.get(key, 0) + (a["speeding"] + a["brakes"] + a["harsh_accel"])
+
+        return weekly
+
+    # -------------------------
+    # GENERATE CHART
+    # -------------------------
+    def generate_weekly_chart(self, weekly_data):
+        if not weekly_data:
+            return None
+
+        weeks = list(weekly_data.keys())
+        counts = list(weekly_data.values())
+
+        plt.figure(figsize=(14, 7), dpi=200)
+        plt.plot(weeks, counts, marker="o", color="white", linewidth=3)
+        plt.title("Weekly Alert Trend", fontsize=22, color="white")
+        plt.xlabel("Week", fontsize=18, color="white")
+        plt.ylabel("Total Alerts", fontsize=18, color="white")
+        plt.grid(True, linestyle="--", alpha=0.4)
+
+        # Theme
+        ax = plt.gca()
+        ax.set_facecolor("#222222")
+        plt.gcf().patch.set_facecolor("#111111")
+        ax.tick_params(axis='x', colors='white', labelsize=14)
+        ax.tick_params(axis='y', colors='white', labelsize=14)
+
+        plt.tight_layout()
+
+        buf = io.BytesIO()
+        plt.savefig(buf, format="png", facecolor=plt.gcf().get_facecolor())
+        plt.close()
+        buf.seek(0)
+
+        try:
+            core_img = CoreImage(buf, ext="png")
+            return core_img.texture
+        except:
+            return None
+
+    # -------------------------
+    # UPDATE SCREEN
+    # -------------------------
+    def on_pre_enter(self):
+        trips = self.load_trip_data()
+
+        if not trips:
+            self.total_alerts_label.text = "[color=FF4444]No trip data found.[/color]"
+            self.common_alert_label.text = ""
+            self.last5_label.text = ""
+            self.chart.texture = None
+            return
+
+        # ---------- TOTAL ALERTS ----------
+        total_speed = total_brake = total_harsh = 0
+
+        for t in trips:
+            a = self.safe_alerts(t)
+            total_speed += a["speeding"]
+            total_brake += a["brakes"]
+            total_harsh += a["harsh_accel"]
+
+        self.total_alerts_label.text = (
+            f"[b][color=F5C542]Total Alerts Across All Trips[/color][/b]\n\n"
+            f"🚀 Speeding: {total_speed}\n"
+            f"🛑 Braking: {total_brake}\n"
+            f"⚡ Harsh Accel: {total_harsh}"
         )
-        popup.open()
+
+        # ---------- MOST COMMON ALERT ----------
+        alert_totals = {
+            "Speeding": total_speed,
+            "Braking": total_brake,
+            "Harsh Accel": total_harsh
+        }
+
+        if all(v == 0 for v in alert_totals.values()):
+            self.common_alert_label.text = "\n[b]Most Common Alert:[/b] None"
+        else:
+            mc = max(alert_totals, key=alert_totals.get)
+            self.common_alert_label.text = f"\n[b]Most Common Alert:[/b] {mc}"
+
+        # ---------- LAST 5 TRIPS ----------
+        last5 = trips[-5:]
+        if not last5:
+            self.last5_label.text = "\n[b]Last 5 Trips Summary[/b]\nNot enough data."
+        else:
+            avg_speed = sum(t.get("avg_speed", 0) or 0 for t in last5) / len(last5)
+            avg_score = sum(t.get("score", 0) or 0 for t in last5) / len(last5)
+
+            total_last5 = 0
+            for t in last5:
+                a = self.safe_alerts(t)
+                total_last5 += (a["speeding"] + a["brakes"] + a["harsh_accel"])
+
+            self.last5_label.text = (
+                f"\n[b]Last 5 Trips Summary[/b]\n"
+                f"Average Speed: {avg_speed:.1f} km/h\n"
+                f"Average Score: {avg_score:.1f}/100\n"
+                f"Total Alerts (Last 5 Trips): {total_last5}"
+            )
+
+        # ---------- CHART ----------
+        weekly_data = self.aggregate_weekly_alerts(trips)
+        tex = self.generate_weekly_chart(weekly_data)
+
+        self.chart.texture = tex if tex else None
