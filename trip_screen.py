@@ -4,6 +4,7 @@ import time
 from threading import Thread
 import json
 import os
+from datetime import datetime   # ⬅ added for timestamp
 
 from kivy.app import App
 from kivy.clock import Clock
@@ -11,6 +12,8 @@ from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.button import Button
 from kivy.uix.label import Label
 from kivy.uix.screenmanager import Screen
+
+from trip_summary_utils import compute_summary   # ⬅ added for summary computation
 
 
 class TripRecordingScreen(Screen):
@@ -65,7 +68,7 @@ class TripRecordingScreen(Screen):
         self.samples = []  # ⬅ stores telemetry for trip summary
 
         # auto-save every 5 seconds
-        Clock.schedule_interval(self.auto_save,5)
+        Clock.schedule_interval(self.auto_save, 5)
 
     # ------------------------------------------------------
     # START BUTTON
@@ -93,7 +96,7 @@ class TripRecordingScreen(Screen):
         if os.path.exists("autosave.json"):
             os.remove("autosave.json")
 
-        # Format samples for trip summary screen
+        # Format samples for summary
         summary_samples = []
         for s in self.samples:
             summary_samples.append({
@@ -103,9 +106,28 @@ class TripRecordingScreen(Screen):
                 "distance_km": s["dist"]
             })
 
-        # Send data to summary screen
+        # Compute summary
+        summary = compute_summary(summary_samples)
+
+        # Add timestamp
+        summary["timestamp"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+        # Save to history.json
+        history_path = "history.json"
+        if os.path.exists(history_path):
+            with open(history_path, "r") as f:
+                history = json.load(f)
+        else:
+            history = []
+
+        history.append(summary)
+
+        with open(history_path, "w") as f:
+            json.dump(history, f, indent=2)
+
+        # Load summary screen
         trip_summary = self.manager.get_screen("trip_summary")
-        trip_summary.set_samples(summary_samples)
+        trip_summary.set_summary(summary)
 
         # Navigate to summary
         self.manager.transition.direction = "left"
@@ -182,4 +204,3 @@ class TripRecordingScreen(Screen):
             with open("autosave.json", "r") as f:
                 return json.load(f)
         return None
-

@@ -1,5 +1,3 @@
-# trip_history_screen.py
-
 import json
 import os
 from kivy.uix.screenmanager import Screen
@@ -8,22 +6,41 @@ from kivy.uix.scrollview import ScrollView
 from kivy.uix.label import Label
 from kivy.uix.button import Button
 from kivy.metrics import dp
+from kivy.uix.gridlayout import GridLayout
+from datetime import datetime, timedelta
 
 
 class TripHistoryScreen(Screen):
+
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
         root = BoxLayout(orientation="vertical", padding=dp(16), spacing=dp(12))
 
-        self.title = Label(text="📚 Trip History", font_size=22, bold=True)
-        root.add_widget(self.title)
+        # TITLE
+        root.add_widget(Label(text="📚 Trip History", font_size=22, bold=True))
 
-        # Scroll container
+        # Filter row (Today / Week / All)
+        filter_row = BoxLayout(size_hint_y=None, height=dp(48), spacing=dp(8))
+        self.filter_value = "all"
+
+        btn_today = Button(text="Today")
+        btn_today.bind(on_press=lambda *_: self.set_filter("today"))
+
+        btn_week = Button(text="Week")
+        btn_week.bind(on_press=lambda *_: self.set_filter("week"))
+
+        btn_all = Button(text="All Time")
+        btn_all.bind(on_press=lambda *_: self.set_filter("all"))
+
+        filter_row.add_widget(btn_today)
+        filter_row.add_widget(btn_week)
+        filter_row.add_widget(btn_all)
+        root.add_widget(filter_row)
+
+        # Scrollable trip list
         scroll = ScrollView(do_scroll_y=True)
-        self.history_box = BoxLayout(
-            orientation="vertical", spacing=dp(10), size_hint_y=None
-        )
+        self.history_box = GridLayout(cols=1, spacing=dp(8), size_hint_y=None)
         self.history_box.bind(minimum_height=self.history_box.setter("height"))
         scroll.add_widget(self.history_box)
         root.add_widget(scroll)
@@ -40,41 +57,66 @@ class TripHistoryScreen(Screen):
         btn_row.add_widget(btn_refresh)
 
         root.add_widget(btn_row)
+
         self.add_widget(root)
+
+    def set_filter(self, val):
+        self.filter_value = val
+        self.load_history()
 
     def on_pre_enter(self):
         self.load_history()
 
-    def load_history(self):
-        """Loads and displays trips from local history.json"""
-        history_path = "history.json"
+    def passes_filter(self, trip):
+        ts = datetime.strptime(trip["timestamp"], "%Y-%m-%d %H:%M:%S")
+        now = datetime.now()
 
-        # Clear old trip cards
+        if self.filter_value == "today":
+            return ts.date() == now.date()
+        if self.filter_value == "week":
+            return ts >= now - timedelta(days=7)
+        return True
+
+    def load_history(self):
+        path = "history.json"
         self.history_box.clear_widgets()
 
-        if not os.path.exists(history_path):
-            self.history_box.add_widget(Label(text="No trips saved yet."))
+        if not os.path.exists(path):
+            self.history_box.add_widget(Label(text="No trips yet."))
             return
 
-        with open(history_path, "r") as f:
+        with open(path, "r") as f:
             history = json.load(f)
 
-        if not history:
-            self.history_box.add_widget(Label(text="No trips saved yet."))
+        # SORT NEWEST → OLDEST
+        history.sort(key=lambda t: t["timestamp"], reverse=True)
+
+        # Apply filter
+        trips = [t for t in history if self.passes_filter(t)]
+
+        if not trips:
+            self.history_box.add_widget(Label(text="No trips match your filter."))
             return
 
-        for i, trip in enumerate(history, start=1):
-            card = Label(
+        for trip in trips:
+
+            btn = Button(
                 text=(
-                    f"[b]Trip #{i}[/b]\n"
-                    f"• Distance: {trip['total_distance_km']} km\n"
-                    f"• Avg Speed: {trip['avg_speed_kmh']} km/h\n"
-                    f"• Brakes: {trip['brake_events']}\n"
-                    f"• Harsh Accel: {trip['harsh_accel']}\n"
-                    f"⭐ Score: {trip['safety_score']}"
+                    f"[b]{trip['timestamp']}[/b]\n"
+                    f"Distance: {trip['total_distance_km']} km | "
+                    f"Score: {trip['safety_score']}"
                 ),
                 markup=True,
                 size_hint_y=None,
-                height=dp(140),
+                height=dp(90),
+                halign="left",
+                valign="middle",
             )
-            self.history_box.add_widget(card)
+
+            btn.bind(on_press=lambda _, t=trip: self.open_summary(t))
+            self.history_box.add_widget(btn)
+
+    def open_summary(self, trip):
+        screen = self.manager.get_screen("trip_summary")
+        screen.set_summary(trip)
+        self.manager.current = "trip_summary"
