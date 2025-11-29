@@ -1,23 +1,29 @@
 # threshold_config.py
-"""
-Central thresholds and penalty configuration for DriveIQ scoring.
-Change values here and the whole app will use updated rules.
-"""
+
+# ---------- SPEED THRESHOLD ----------
+SPEED_LIMIT_KMH = 110         # max safe speed before speeding event
+
+# ---------- BRAKING THRESHOLD ----------
+BRAKE_SENSITIVITY = 2         # count brake event if braking > threshold
+
+# ---------- ACCEL THRESHOLD ----------
+ACCEL_SENSITIVITY = 3         # count harsh accel event if accel > threshold
 
 # ---------- SAFETY SCORE BASE ----------
-BASE_SAFETY_SCORE = 100
+SCORE_START = 100             # starting score before penalties
 
-# ---------- SPEED ----------
-# Max safe speed before marking as speeding
-SPEED_LIMIT_KMH = 110
-PENALTY_SPEEDING = 5
+# ---------- PENALTY VALUES ----------
+SPEED_PENALTY = 5             # score -5 per speeding event
+BRAKE_PENALTY = 5             # score -5 per harsh brake event
+ACCEL_PENALTY = 5             # score -5 per harsh accel event
 
-# ---------- BRAKING ----------
-# Max "normal" brake events before we consider it harsh overall
-BRAKE_EVENT_LIMIT = 2
-PENALTY_BRAKING = 5
-
-# ---------- ACCELERATION ----------
-# Max "normal" harsh accel events before we consider it aggressive
-HARSH_ACCEL_LIMIT = 3
-PENALTY_ACCEL = 5
+# dictionary used in imports
+THRESHOLDS = {
+    "SPEED_LIMIT_KMH": SPEED_LIMIT_KMH,
+    "BRAKE_SENSITIVITY": BRAKE_SENSITIVITY,
+    "ACCEL_SENSITIVITY": ACCEL_SENSITIVITY,
+    "SCORE_START": SCORE_START,
+    "SPEED_PENALTY": SPEED_PENALTY,
+    "BRAKE_PENALTY": BRAKE_PENALTY,
+    "ACCEL_PENALTY": ACCEL_PENALTY
+}
