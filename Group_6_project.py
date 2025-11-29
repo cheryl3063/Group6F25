@@ -103,28 +103,38 @@ def save_trip():
 
     print(f"→ Trip Payload: {data}")
 
-    # Save trip data to local file
     save_path = os.path.join(BASE_DIR, "saved_trips.json")
 
-    # Load previous data
+    # Load file
     if os.path.exists(save_path):
-        with open(save_path, "r") as f:
-            try:
+        try:
+            with open(save_path, "r") as f:
                 db = json.load(f)
-            except:
-                db = []
+
+            # If file is an array → convert to dict
+            if isinstance(db, list):
+                print("⚠ Converting old list-format backend into dict-format.")
+                db = {"user123": db}
+
+        except Exception:
+            db = {}
     else:
-        db = []
+        db = {}
 
-    # Append new trip
-    db.append(data)
+    # Ensure user list exists
+    user_id = "user123"
+    if user_id not in db:
+        db[user_id] = []
 
+    db[user_id].append(data)
+
+    # Save file
     with open(save_path, "w") as f:
         json.dump(db, f, indent=4)
 
     print("✔ Trip saved successfully.")
+    return jsonify({"status": "saved", "entries": len(db[user_id])}), 200
 
-    return jsonify({"status": "saved", "entries": len(db)}), 200
 
 
 # ----------------- Entrypoint ----------------

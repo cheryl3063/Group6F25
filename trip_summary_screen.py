@@ -4,12 +4,12 @@ from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.label import Label
 from kivy.uix.button import Button
 from kivy.metrics import dp
-from trip_summary_utils import compute_summary
+
 
 class TripSummaryScreen(Screen):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.samples = []
+        self.summary = None
 
         root = BoxLayout(orientation="vertical", padding=dp(16), spacing=dp(12))
 
@@ -23,7 +23,6 @@ class TripSummaryScreen(Screen):
             valign="top",
             markup=True
         )
-
         self.metrics.bind(size=lambda *_: setattr(self.metrics, "text_size", self.metrics.size))
         root.add_widget(self.metrics)
 
@@ -32,20 +31,20 @@ class TripSummaryScreen(Screen):
         self.btn_back.bind(on_press=lambda *_: setattr(self.manager, "current", "dashboard"))
         btn_row.add_widget(self.btn_back)
 
-        self.btn_refresh = Button(text="↻ Recompute")
-        self.btn_refresh.bind(on_press=lambda *_: self._render())
-        btn_row.add_widget(self.btn_refresh)
-
         root.add_widget(btn_row)
         self.add_widget(root)
 
-    def set_samples(self, samples):
-        """Call this before showing the screen."""
-        self.samples = samples or []
+    # NEW — receive summary dict
+    def set_summary(self, summary):
+        self.summary = summary
         self._render()
 
     def _render(self):
-        s = compute_summary(self.samples)
+        if not self.summary:
+            self.metrics.text = "No data yet."
+            return
+
+        s = self.summary
         self.metrics.text = (
             f"• Distance: {s['total_distance_km']} km\n"
             f"• Avg Speed: {s['avg_speed_kmh']} km/h\n"

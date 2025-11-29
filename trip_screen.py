@@ -13,12 +13,17 @@ from kivy.uix.button import Button
 from kivy.uix.label import Label
 from kivy.uix.screenmanager import Screen
 
+# NEW: import TripManager
+from trip_manager import TripManager
+
 
 class TripRecordingScreen(Screen):
     BACKEND_URL = "http://127.0.0.1:5050/save_trip"
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+
+        self.trip_manager = TripManager(user_id="user123")   # NEW
 
         self.layout = BoxLayout(orientation="vertical", padding=25, spacing=15)
 
@@ -77,34 +82,33 @@ class TripRecordingScreen(Screen):
         self.running = False
         self.start_btn.text = "▶️ Start Trip"
 
-        # Remove autosave
         if os.path.exists("autosave.json"):
             os.remove("autosave.json")
 
-        # Convert samples
-        summary_samples = [
+        # Convert raw samples into the format TripManager expects
+        formatted_samples = [
             {
                 "speed": s["speed"],
                 "brake_events": s["brake"],
                 "harsh_accel": s["harsh"],
-                "distance_km": s["dist"]
+                "distance_km": s["dist"],
             }
             for s in self.samples
         ]
 
-        # Compute summary
-        from trip_summary_utils import compute_summary
-        summary_result = compute_summary(summary_samples)
+        # NEW: Use TripManager to compute summary + save backend
+        summary = self.trip_manager.end_trip_and_save(formatted_samples)
 
-        print("\n=== GENERATED SUMMARY ===")
-        print(summary_result)
+        print("\n=== SUMMARY (via TripManager) ===")
+        print(summary)
 
-        # Send to backend
-        self.send_to_backend(summary_samples, summary_result)
+        # Send to backend for your external server (unchanged)
+        self.send_to_backend(formatted_samples, summary)
 
-        # Send to app controller
-        app = App.get_running_app()
-        app.receive_trip_summary(summary_samples)
+        # Navigate to summary screen
+        summary_screen = self.manager.get_screen("trip_summary")
+        summary_screen.set_summary(summary)   # NEW
+        self.manager.current = "trip_summary"
 
     # -------------------------------
     def send_to_backend(self, samples, summary):

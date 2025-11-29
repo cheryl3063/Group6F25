@@ -1,375 +1,209 @@
-[
-    {
-        "samples": [
-            {
-                "speed": 30,
-                "brake_events": 1,
-                "harsh_accel": 1,
-                "distance_km": 0.38
-            },
-            {
-                "speed": 44,
-                "brake_events": 0,
-                "harsh_accel": 0,
-                "distance_km": 0.2
-            },
-            {
-                "speed": 68,
-                "brake_events": 1,
-                "harsh_accel": 0,
-                "distance_km": 0.37
-            },
-            {
-                "speed": 67,
-                "brake_events": 0,
-                "harsh_accel": 0,
-                "distance_km": 0.36
-            },
-            {
-                "speed": 73,
-                "brake_events": 0,
-                "harsh_accel": 0,
-                "distance_km": 0.28
-            },
-            {
-                "speed": 46,
-                "brake_events": 0,
-                "harsh_accel": 1,
-                "distance_km": 0.39
-            },
-            {
-                "speed": 34,
-                "brake_events": 0,
-                "harsh_accel": 0,
-                "distance_km": 0.31
-            },
-            {
-                "speed": 47,
-                "brake_events": 0,
-                "harsh_accel": 0,
-                "distance_km": 0.26
-            },
-            {
-                "speed": 31,
-                "brake_events": 1,
-                "harsh_accel": 0,
-                "distance_km": 0.2
-            },
-            {
-                "speed": 64,
-                "brake_events": 1,
-                "harsh_accel": 0,
-                "distance_km": 0.33
+{
+    "user123": [
+        {
+            "trip_id": "bca91720-e415-487c-b33b-2e511ff44740",
+            "timestamp": "2025-11-28 06:26:10",
+            "samples": [
+                {
+                    "speed": 42,
+                    "brake_events": 0,
+                    "harsh_accel": 0,
+                    "distance_km": 0.35
+                },
+                {
+                    "speed": 46,
+                    "brake_events": 0,
+                    "harsh_accel": 0,
+                    "distance_km": 0.4
+                },
+                {
+                    "speed": 39,
+                    "brake_events": 1,
+                    "harsh_accel": 0,
+                    "distance_km": 0.32
+                },
+                {
+                    "speed": 72,
+                    "brake_events": 1,
+                    "harsh_accel": 1,
+                    "distance_km": 0.37
+                },
+                {
+                    "speed": 90,
+                    "brake_events": 0,
+                    "harsh_accel": 0,
+                    "distance_km": 0.12
+                },
+                {
+                    "speed": 67,
+                    "brake_events": 0,
+                    "harsh_accel": 0,
+                    "distance_km": 0.26
+                },
+                {
+                    "speed": 35,
+                    "brake_events": 0,
+                    "harsh_accel": 0,
+                    "distance_km": 0.14
+                },
+                {
+                    "speed": 59,
+                    "brake_events": 0,
+                    "harsh_accel": 1,
+                    "distance_km": 0.33
+                },
+                {
+                    "speed": 53,
+                    "brake_events": 0,
+                    "harsh_accel": 1,
+                    "distance_km": 0.37
+                },
+                {
+                    "speed": 76,
+                    "brake_events": 1,
+                    "harsh_accel": 0,
+                    "distance_km": 0.27
+                },
+                {
+                    "speed": 77,
+                    "brake_events": 1,
+                    "harsh_accel": 0,
+                    "distance_km": 0.13
+                }
+            ],
+            "summary": {
+                "total_distance_km": 3.06,
+                "avg_speed_kmh": 59.6,
+                "brake_events": 4,
+                "harsh_accel": 3,
+                "safety_score": 59
             }
-        ],
-        "summary": {
-            "total_distance_km": 3.08,
-            "avg_speed_kmh": 50.4,
-            "brake_events": 4,
-            "harsh_accel": 2,
-            "safety_score": 78
-        }
-    },
-    {
-        "samples": [
-            {
-                "speed": 53,
+        },
+        {
+            "trip_id": "0335073f-1b10-4b72-bd49-31c6881a06ca",
+            "timestamp": "2025-11-28 06:20:38",
+            "samples": [
+                {
+                    "speed": 69,
+                    "brake_events": 0,
+                    "harsh_accel": 0,
+                    "distance_km": 0.25
+                },
+                {
+                    "speed": 74,
+                    "brake_events": 0,
+                    "harsh_accel": 0,
+                    "distance_km": 0.3
+                },
+                {
+                    "speed": 65,
+                    "brake_events": 0,
+                    "harsh_accel": 0,
+                    "distance_km": 0.15
+                },
+                {
+                    "speed": 32,
+                    "brake_events": 0,
+                    "harsh_accel": 0,
+                    "distance_km": 0.19
+                },
+                {
+                    "speed": 39,
+                    "brake_events": 0,
+                    "harsh_accel": 0,
+                    "distance_km": 0.38
+                },
+                {
+                    "speed": 35,
+                    "brake_events": 1,
+                    "harsh_accel": 0,
+                    "distance_km": 0.14
+                }
+            ],
+            "summary": {
+                "total_distance_km": 1.41,
+                "avg_speed_kmh": 52.3,
                 "brake_events": 1,
                 "harsh_accel": 0,
-                "distance_km": 0.24
-            },
-            {
-                "speed": 86,
-                "brake_events": 0,
-                "harsh_accel": 0,
-                "distance_km": 0.28
-            },
-            {
-                "speed": 65,
-                "brake_events": 0,
-                "harsh_accel": 1,
-                "distance_km": 0.26
-            },
-            {
-                "speed": 56,
-                "brake_events": 0,
-                "harsh_accel": 0,
-                "distance_km": 0.17
-            },
-            {
-                "speed": 64,
-                "brake_events": 1,
-                "harsh_accel": 0,
-                "distance_km": 0.36
-            },
-            {
-                "speed": 45,
-                "brake_events": 0,
-                "harsh_accel": 0,
-                "distance_km": 0.29
-            },
-            {
-                "speed": 59,
-                "brake_events": 1,
-                "harsh_accel": 1,
-                "distance_km": 0.22
-            },
-            {
-                "speed": 56,
-                "brake_events": 0,
-                "harsh_accel": 0,
-                "distance_km": 0.39
+                "safety_score": 95
             }
-        ],
-        "summary": {
-            "total_distance_km": 2.21,
-            "avg_speed_kmh": 60.5,
-            "brake_events": 3,
-            "harsh_accel": 2,
-            "safety_score": 82
-        }
-    },
-    {
-        "samples": [
-            {
-                "speed": 39,
-                "brake_events": 0,
-                "harsh_accel": 0,
-                "distance_km": 0.3
-            },
-            {
-                "speed": 64,
-                "brake_events": 0,
-                "harsh_accel": 0,
-                "distance_km": 0.31
-            },
-            {
-                "speed": 66,
-                "brake_events": 0,
-                "harsh_accel": 0,
-                "distance_km": 0.19
-            },
-            {
-                "speed": 88,
-                "brake_events": 1,
-                "harsh_accel": 0,
-                "distance_km": 0.13
-            },
-            {
-                "speed": 73,
-                "brake_events": 0,
-                "harsh_accel": 1,
-                "distance_km": 0.13
-            },
-            {
-                "speed": 38,
-                "brake_events": 0,
-                "harsh_accel": 1,
-                "distance_km": 0.13
-            },
-            {
-                "speed": 82,
-                "brake_events": 1,
-                "harsh_accel": 1,
-                "distance_km": 0.19
-            },
-            {
-                "speed": 42,
-                "brake_events": 0,
-                "harsh_accel": 0,
-                "distance_km": 0.29
-            },
-            {
-                "speed": 62,
-                "brake_events": 0,
-                "harsh_accel": 0,
-                "distance_km": 0.1
-            },
-            {
-                "speed": 78,
-                "brake_events": 0,
-                "harsh_accel": 0,
-                "distance_km": 0.1
+        },
+        {
+            "samples": [
+                {
+                    "speed": 42,
+                    "brake_events": 0,
+                    "harsh_accel": 0,
+                    "distance_km": 0.35
+                },
+                {
+                    "speed": 46,
+                    "brake_events": 0,
+                    "harsh_accel": 0,
+                    "distance_km": 0.4
+                },
+                {
+                    "speed": 39,
+                    "brake_events": 1,
+                    "harsh_accel": 0,
+                    "distance_km": 0.32
+                },
+                {
+                    "speed": 72,
+                    "brake_events": 1,
+                    "harsh_accel": 1,
+                    "distance_km": 0.37
+                },
+                {
+                    "speed": 90,
+                    "brake_events": 0,
+                    "harsh_accel": 0,
+                    "distance_km": 0.12
+                },
+                {
+                    "speed": 67,
+                    "brake_events": 0,
+                    "harsh_accel": 0,
+                    "distance_km": 0.26
+                },
+                {
+                    "speed": 35,
+                    "brake_events": 0,
+                    "harsh_accel": 0,
+                    "distance_km": 0.14
+                },
+                {
+                    "speed": 59,
+                    "brake_events": 0,
+                    "harsh_accel": 1,
+                    "distance_km": 0.33
+                },
+                {
+                    "speed": 53,
+                    "brake_events": 0,
+                    "harsh_accel": 1,
+                    "distance_km": 0.37
+                },
+                {
+                    "speed": 76,
+                    "brake_events": 1,
+                    "harsh_accel": 0,
+                    "distance_km": 0.27
+                },
+                {
+                    "speed": 77,
+                    "brake_events": 1,
+                    "harsh_accel": 0,
+                    "distance_km": 0.13
+                }
+            ],
+            "summary": {
+                "total_distance_km": 3.06,
+                "avg_speed_kmh": 59.6,
+                "brake_events": 4,
+                "harsh_accel": 3,
+                "safety_score": 59
             }
-        ],
-        "summary": {
-            "total_distance_km": 1.87,
-            "avg_speed_kmh": 63.2,
-            "brake_events": 2,
-            "harsh_accel": 3,
-            "safety_score": 83
         }
-    },
-    {
-        "samples": [
-            {
-                "speed": 39,
-                "brake_events": 0,
-                "harsh_accel": 0,
-                "distance_km": 0.25
-            },
-            {
-                "speed": 44,
-                "brake_events": 1,
-                "harsh_accel": 1,
-                "distance_km": 0.32
-            },
-            {
-                "speed": 51,
-                "brake_events": 0,
-                "harsh_accel": 0,
-                "distance_km": 0.25
-            },
-            {
-                "speed": 36,
-                "brake_events": 0,
-                "harsh_accel": 0,
-                "distance_km": 0.2
-            },
-            {
-                "speed": 38,
-                "brake_events": 0,
-                "harsh_accel": 0,
-                "distance_km": 0.14
-            },
-            {
-                "speed": 74,
-                "brake_events": 1,
-                "harsh_accel": 0,
-                "distance_km": 0.28
-            },
-            {
-                "speed": 60,
-                "brake_events": 0,
-                "harsh_accel": 1,
-                "distance_km": 0.11
-            }
-        ],
-        "summary": {
-            "total_distance_km": 1.55,
-            "avg_speed_kmh": 48.9,
-            "brake_events": 2,
-            "harsh_accel": 2,
-            "safety_score": 86
-        }
-    },
-    {
-        "samples": [
-            {
-                "speed": 84,
-                "brake_events": 0,
-                "harsh_accel": 0,
-                "distance_km": 0.35
-            },
-            {
-                "speed": 73,
-                "brake_events": 0,
-                "harsh_accel": 0,
-                "distance_km": 0.29
-            },
-            {
-                "speed": 82,
-                "brake_events": 1,
-                "harsh_accel": 1,
-                "distance_km": 0.34
-            },
-            {
-                "speed": 69,
-                "brake_events": 0,
-                "harsh_accel": 0,
-                "distance_km": 0.34
-            },
-            {
-                "speed": 35,
-                "brake_events": 0,
-                "harsh_accel": 0,
-                "distance_km": 0.36
-            },
-            {
-                "speed": 58,
-                "brake_events": 0,
-                "harsh_accel": 0,
-                "distance_km": 0.11
-            },
-            {
-                "speed": 66,
-                "brake_events": 0,
-                "harsh_accel": 0,
-                "distance_km": 0.14
-            },
-            {
-                "speed": 56,
-                "brake_events": 1,
-                "harsh_accel": 0,
-                "distance_km": 0.17
-            },
-            {
-                "speed": 43,
-                "brake_events": 0,
-                "harsh_accel": 1,
-                "distance_km": 0.36
-            },
-            {
-                "speed": 47,
-                "brake_events": 0,
-                "harsh_accel": 0,
-                "distance_km": 0.29
-            },
-            {
-                "speed": 64,
-                "brake_events": 0,
-                "harsh_accel": 0,
-                "distance_km": 0.29
-            },
-            {
-                "speed": 38,
-                "brake_events": 0,
-                "harsh_accel": 1,
-                "distance_km": 0.11
-            },
-            {
-                "speed": 61,
-                "brake_events": 1,
-                "harsh_accel": 1,
-                "distance_km": 0.15
-            },
-            {
-                "speed": 30,
-                "brake_events": 0,
-                "harsh_accel": 0,
-                "distance_km": 0.1
-            },
-            {
-                "speed": 63,
-                "brake_events": 0,
-                "harsh_accel": 0,
-                "distance_km": 0.1
-            },
-            {
-                "speed": 87,
-                "brake_events": 0,
-                "harsh_accel": 0,
-                "distance_km": 0.24
-            },
-            {
-                "speed": 88,
-                "brake_events": 0,
-                "harsh_accel": 1,
-                "distance_km": 0.27
-            },
-            {
-                "speed": 43,
-                "brake_events": 0,
-                "harsh_accel": 0,
-                "distance_km": 0.16
-            }
-        ],
-        "summary": {
-            "total_distance_km": 4.17,
-            "avg_speed_kmh": 60.4,
-            "brake_events": 3,
-            "harsh_accel": 5,
-            "safety_score": 73
-        }
-    }
-]
+    ]
+}
