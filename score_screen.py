@@ -14,23 +14,22 @@ class ScoreScreen(Screen):
 
         root = BoxLayout(
             orientation="vertical",
-            padding=dp(26),
-            spacing=dp(22),
-            pos_hint={"center_x": 0.5, "center_y": 0.5}
+            padding=dp(24),
+            spacing=dp(20)
         )
 
         card = BoxLayout(
             orientation="vertical",
-            padding=dp(26),
-            spacing=dp(20),
-            size_hint=(0.85, 0.75),
-            pos_hint={"center_x": 0.5, "center_y": 0.5}
+            padding=dp(24),
+            spacing=dp(14),
+            size_hint=(1, None),
+            height=dp(360),
+            pos_hint={"center_x": 0.5}
         )
 
-        # Card background
         with card.canvas.before:
             Color(0.15, 0.15, 0.15, 0.9)
-            self.card_bg = RoundedRectangle(radius=[25])
+            self.card_bg = RoundedRectangle(radius=[22])
 
         def update_bg(*_):
             self.card_bg.pos = card.pos
@@ -38,16 +37,16 @@ class ScoreScreen(Screen):
 
         card.bind(size=update_bg, pos=update_bg)
 
-        # Title
         title = Label(
             text="⭐ Driver Score",
-            font_size=32,
+            font_size=30,
             bold=True,
-            color=(1, 1, 1, 1)
+            color=(1, 1, 1, 1),
+            size_hint_y=None,
+            height=dp(40)
         )
         card.add_widget(title)
 
-        # Main Score (big + colored)
         self.score_label = Label(
             text="--",
             font_size=70,
@@ -57,23 +56,21 @@ class ScoreScreen(Screen):
         )
         card.add_widget(self.score_label)
 
-        # Detailed labels
-        self.avg_speed_label = Label(font_size=22, color=(0.9, 0.9, 0.9, 1))
-        self.distance_label = Label(font_size=22, color=(0.9, 0.9, 0.9, 1))
-        self.brake_label = Label(font_size=22, markup=True)
-        self.accel_label = Label(font_size=22, markup=True)
+        self.avg_speed_label = Label(font_size=20, color=(0.9, 0.9, 0.9, 1))
+        self.distance_label = Label(font_size=20, color=(0.9, 0.9, 0.9, 1))
+        self.brake_label = Label(font_size=20, markup=True)
+        self.accel_label = Label(font_size=20, markup=True)
 
         card.add_widget(self.avg_speed_label)
         card.add_widget(self.distance_label)
         card.add_widget(self.brake_label)
         card.add_widget(self.accel_label)
 
-        # Back button
         back = Button(
             text="⬅ Back",
             size_hint_y=None,
-            height=dp(55),
-            font_size=20,
+            height=dp(52),
+            font_size=18,
             background_color=(0.2, 0.2, 0.2, 1),
             color=(1, 1, 1, 1)
         )
@@ -83,8 +80,6 @@ class ScoreScreen(Screen):
         root.add_widget(card)
         self.add_widget(root)
 
-
-    # Auto-refresh score whenever screen opens
     def on_pre_enter(self, *args):
         latest = load_latest_trip()
         if latest:
@@ -96,29 +91,25 @@ class ScoreScreen(Screen):
                 "harsh_accel": latest["harsh_accel"]
             })
 
-    # Main update method — called by Trip Summary
     def update_score(self, data):
         score = data["score"]
 
-        # score color logic
         if score >= 80:
-            sc = "3CB043"  # green
+            sc = "3CB043"
         elif score >= 60:
-            sc = "F7C325"  # yellow
+            sc = "F7C325"
         else:
-            sc = "D32F2F"  # red
+            sc = "D32F2F"
 
         self.score_label.text = f"[color=#{sc}]{score}[/color]"
 
         self.avg_speed_label.text = f"Avg Speed: {data['avg_speed']} km/h"
         self.distance_label.text = f"Distance: {data['distance_km']} km"
 
-        # braking color logic
         b = data["brake_events"]
         bc = "3CB043" if b == 0 else "F7C325" if b <= 2 else "D32F2F"
         self.brake_label.text = f"[color=#{bc}]Braking Events: {b}[/color]"
 
-        # harsh accel color logic
         h = data["harsh_accel"]
         hc = "3CB043" if h == 0 else "F7C325" if h <= 2 else "D32F2F"
         self.accel_label.text = f"[color=#{hc}]Harsh Accel: {h}[/color]"

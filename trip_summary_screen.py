@@ -7,141 +7,104 @@ from kivy.metrics import dp
 from kivy.graphics import Color, RoundedRectangle
 
 from trip_summary_utils import compute_summary
-from mock_backend import save_latest_trip, load_latest_trip
+from mock_backend import save_latest_trip
 
 
 class TripSummaryScreen(Screen):
-
-    # -----------------------------
-    # Constructor – Build the UI
-    # -----------------------------
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.samples = []
 
-        # Center container
+        # Root container
         root = BoxLayout(
             orientation="vertical",
-            padding=dp(40),
-            spacing=dp(25),
-            size_hint=(0.9, 0.8),
+            padding=dp(32),
+            spacing=dp(26),
+            size_hint=(0.92, 0.92),
             pos_hint={"center_x": 0.5, "center_y": 0.5}
         )
 
         # Background card
         with root.canvas.before:
-            Color(0.15, 0.15, 0.15, 0.9)
-            self.bg_rect = RoundedRectangle(radius=[25])
+            Color(0.12, 0.12, 0.12, 0.92)
+            self.bg_rect = RoundedRectangle(radius=[20])
 
-        def update_bg(*_):
-            self.bg_rect.pos = root.pos
-            self.bg_rect.size = root.size
-
-        root.bind(pos=update_bg, size=update_bg)
+        root.bind(pos=self._update_bg, size=self._update_bg)
 
         # Title
-        self.title = Label(
+        title = Label(
             text="📄 Trip Summary",
-            font_size=32,
+            font_size=34,
             bold=True,
-            halign="center",
-            color=(1, 1, 1, 1)
+            color=(1, 1, 1, 1),
+            size_hint_y=None,
+            height=dp(50)
         )
-        root.add_widget(self.title)
+        root.add_widget(title)
 
-        # Summary label
+        # Metrics display
         self.metrics = Label(
             text="No data yet.",
             font_size=22,
+            color=(0.92, 0.92, 0.92, 1),
             halign="center",
-            valign="middle",
-            color=(0.9, 0.9, 0.9, 1)
+            valign="middle"
         )
-        self.metrics.bind(size=lambda *_: setattr(self.metrics, "text_size", self.metrics.size))
+        self.metrics.bind(
+            size=lambda *_: setattr(self.metrics, "text_size", self.metrics.size)
+        )
         root.add_widget(self.metrics)
 
-        # --- Button Row ---
-        btn_row = BoxLayout(spacing=dp(15), size_hint_y=None, height=dp(60))
+        # Buttons
+        btn_row = BoxLayout(
+            orientation="horizontal",
+            spacing=dp(16),
+            size_hint_y=None,
+            height=dp(60)
+        )
 
-        # Back
-        btn_back = Button(
+        back_btn = Button(
             text="⬅ Back",
             font_size=20,
-            background_color=(0.2, 0.2, 0.2, 1),
-            color=(1, 1, 1, 1),
+            background_color=(0.22, 0.22, 0.22, 1),
+            color=(1, 1, 1, 1)
         )
-        btn_back.bind(on_press=lambda *_: setattr(self.manager, "current", "dashboard"))
-        btn_row.add_widget(btn_back)
+        back_btn.bind(on_press=lambda *_: setattr(self.manager, "current", "dashboard"))
+        btn_row.add_widget(back_btn)
 
-        # Recompute
-        btn_refresh = Button(
+        recalc_btn = Button(
             text="↻ Recompute",
             font_size=20,
-            background_color=(0.1, 0.4, 0.8, 1),
+            background_color=(0.10, 0.45, 0.82, 1),
             color=(1, 1, 1, 1)
         )
-        btn_refresh.bind(on_press=lambda *_: self._render())
-        btn_row.add_widget(btn_refresh)
+        recalc_btn.bind(on_press=lambda *_: self._render())
+        btn_row.add_widget(recalc_btn)
 
-        # Go to Score
-        btn_score = Button(
-            text="⭐ View Score",
+        score_btn = Button(
+            text="⭐ Score",
             font_size=20,
-            background_color=(0.8, 0.65, 0.1, 1),
+            background_color=(0.90, 0.68, 0.15, 1),
             color=(1, 1, 1, 1)
         )
-        btn_score.bind(on_press=self.go_to_score)
-        btn_row.add_widget(btn_score)
+        score_btn.bind(on_press=self.go_to_score)
+        btn_row.add_widget(score_btn)
 
         root.add_widget(btn_row)
         self.add_widget(root)
 
-    # -----------------------------
-    # Auto-refresh whenever opened
-    # -----------------------------
-    def on_pre_enter(self, *args):
-        """Automatically refresh screen from mock backend every time it opens."""
-        latest = load_latest_trip()
+    def _update_bg(self, *args):
+        self.bg_rect.pos = self.children[0].pos
+        self.bg_rect.size = self.children[0].size
 
-        if latest:
-            self.metrics.text = (
-                f"• Distance: {latest['total_distance_km']} km\n"
-                f"• Avg Speed: {latest['avg_speed_kmh']} km/h\n"
-                f"• Brake Events: {latest['brake_events']}\n"
-                f"• Harsh Accel: {latest['harsh_accel']}\n\n"
-                f"⭐ Safety Score: {latest['safety_score']}"
-            )
-
-            # Update score screen too
-            score_screen = self.manager.get_screen("score")
-            score_screen.update_score({
-                "score": latest["safety_score"],
-                "avg_speed": latest["avg_speed_kmh"],
-                "distance_km": latest["total_distance_km"],
-                "brake_events": latest["brake_events"],
-                "harsh_accel": latest["harsh_accel"],
-            })
-
-        else:
-            self.metrics.text = "No trip found. Record a trip first."
-
-    # -----------------------------
-    # Called when TripRecordingScreen stops
-    # -----------------------------
     def set_samples(self, samples):
         self.samples = samples or []
         self._render()
 
-    # -----------------------------
-    # Compute + update + save
-    # -----------------------------
     def _render(self):
         s = compute_summary(self.samples)
 
-        # Save to mock backend
-        save_latest_trip(s)
-
-        # Update UI
+        # Update metrics text
         self.metrics.text = (
             f"• Distance: {s['total_distance_km']} km\n"
             f"• Avg Speed: {s['avg_speed_kmh']} km/h\n"
@@ -150,9 +113,18 @@ class TripSummaryScreen(Screen):
             f"⭐ Safety Score: {s['safety_score']}"
         )
 
-        # Update score screen
-        score = self.manager.get_screen("score")
-        score.update_score({
+        # NEW → Save latest trip so InsightsScreen can load it
+        save_latest_trip({
+            "total_distance_km": s["total_distance_km"],
+            "avg_speed_kmh": s["avg_speed_kmh"],
+            "brake_events": s["brake_events"],
+            "harsh_accel": s["harsh_accel"],
+            "safety_score": s["safety_score"]
+        })
+
+        # Auto-update ScoreScreen
+        score_screen = self.manager.get_screen("score")
+        score_screen.update_score({
             "score": s["safety_score"],
             "avg_speed": s["avg_speed_kmh"],
             "distance_km": s["total_distance_km"],
@@ -160,19 +132,5 @@ class TripSummaryScreen(Screen):
             "harsh_accel": s["harsh_accel"]
         })
 
-    # -----------------------------
-    # Navigate to Score Screen
-    # -----------------------------
     def go_to_score(self, *_):
-        s = compute_summary(self.samples)
-
-        score = self.manager.get_screen("score")
-        score.update_score({
-            "score": s["safety_score"],
-            "avg_speed": s["avg_speed_kmh"],
-            "distance_km": s["total_distance_km"],
-            "brake_events": s["brake_events"],
-            "harsh_accel": s["harsh_accel"]
-        })
-
         self.manager.current = "score"
