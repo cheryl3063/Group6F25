@@ -1,16 +1,20 @@
 # scoring_engine.py
-"""
-Score calculation for DriveIQ trips.
 
-Takes high-level trip metrics (avg speed, events, distance)
-and returns a safety score between 0 and 100.
+"""
+Simple scoring engine for a single trip.
+
+We start from BASE_SAFETY_SCORE, then subtract penalties for:
+- speeding (if average speed above limit)
+- brake events
+- harsh acceleration events
 """
 
 from threshold_config import (
     BASE_SAFETY_SCORE,
-    SPEED_LIMIT_KMH, PENALTY_SPEEDING,
-    BRAKE_EVENT_LIMIT, PENALTY_BRAKING,
-    HARSH_ACCEL_LIMIT, PENALTY_ACCEL,
+    PENALTY_SPEEDING,
+    PENALTY_BRAKING,
+    PENALTY_ACCEL,
+    SPEED_LIMIT_KMH,
 )
 
 
@@ -19,44 +23,30 @@ def calculate_score(avg_speed_kmh: float,
                     harsh_accel_events: int,
                     distance_km: float) -> int:
     """
-    Compute a simple safety score using threshold_config values.
+    Calculate a safety score for one trip.
 
-    Parameters
-    ----------
-    avg_speed_kmh : float
-        Average speed for the trip in km/h.
-    brake_events : int
-        Count of brake events recorded.
-    harsh_accel_events : int
-        Count of harsh acceleration events.
-    distance_km : float
-        Total distance of the trip in km (currently not used in penalties,
-        but kept for future normalization if needed).
+    Args:
+        avg_speed_kmh: average speed over the trip
+        brake_events: total brake events
+        harsh_accel_events: total harsh accel events
+        distance_km: total distance (not heavily used yet, but kept for future rules)
 
-    Returns
-    -------
-    int
-        Safety score clamped between 0 and 100.
+    Returns:
+        Integer score between 0 and 100.
     """
+    score = BASE_SAFETY_SCORE
 
-    # Start from base score
-    score = float(BASE_SAFETY_SCORE)
+    # Simple speeding rule: 1 speeding event if avg speed above limit
+    speeding_events = 1 if avg_speed_kmh > SPEED_LIMIT_KMH else 0
 
-    # ---------- SPEEDING ----------
-    # Simple rule: if avg speed exceeds limit, apply one speeding penalty.
-    if avg_speed_kmh > SPEED_LIMIT_KMH:
-        score -= PENALTY_SPEEDING
+    score -= speeding_events * PENALTY_SPEEDING
+    score -= brake_events * PENALTY_BRAKING
+    score -= harsh_accel_events * PENALTY_ACCEL
 
-    # ---------- BRAKING ----------
-    # Only penalize braking ABOVE the allowed limit.
-    extra_brakes = max(0, brake_events - BRAKE_EVENT_LIMIT)
-    score -= extra_brakes * PENALTY_BRAKING
-
-    # ---------- HARSH ACCEL ----------
-    extra_accel = max(0, harsh_accel_events - HARSH_ACCEL_LIMIT)
-    score -= extra_accel * PENALTY_ACCEL
-
-    # Clamp between 0 and 100
-    score = max(0, min(100, round(score)))
+    # Clamp to [0, 100]
+    if score < 0:
+        score = 0
+    if score > 100:
+        score = 100
 
     return int(score)
