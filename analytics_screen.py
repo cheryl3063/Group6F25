@@ -1,163 +1,169 @@
-import random
-import io
-import matplotlib.pyplot as plt
+# analytics_screen.py
 
-from kivy.clock import Clock
-from kivy.core.window import Window
-from kivy.graphics.texture import Texture
-from kivy.uix.boxlayout import BoxLayout
-from kivy.uix.button import Button
-from kivy.uix.image import Image
-from kivy.uix.label import Label
-from kivy.uix.popup import Popup
+import json
+import os
 from kivy.uix.screenmanager import Screen
+from kivy.uix.boxlayout import BoxLayout
+from kivy.uix.label import Label
+from kivy.uix.button import Button
+from kivy.uix.textinput import TextInput
+from kivy.metrics import dp
 
-Window.clearcolor = (0, 0, 0, 1)
-
-#-----#
-self.manager.current = "history"
-#---#
 
 class AnalyticsScreen(Screen):
+    """
+    Shows analytics based on the MOST RECENT saved trip.
+    Reads from trip_history.json (new format) or history.json (older format).
+    """
+
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.running = False
-        self.update_event = None
 
-        self.layout = BoxLayout(orientation="vertical", spacing=15, padding=25)
-        self.title = Label(
-            text="📊 Live Driver Analytics",
-            font_size=22,
-            bold=True,
-            color=(1, 1, 1, 1),
-            #font_name="EmojiFont",
+        root = BoxLayout(orientation="vertical", padding=dp(16), spacing=dp(12))
+
+        # Title
+        title = Label(text="📈 Live Driver Analytics", font_size=22, bold=True)
+        root.add_widget(title)
+
+        # Metrics labels
+        self.avg_speed_label = Label(text="Average Speed: -- km/h", font_size=18)
+        self.distance_label = Label(text="Distance Travelled: -- km", font_size=18)
+        self.score_label = Label(text="Driver Score: --/100", font_size=18)
+
+        root.add_widget(self.avg_speed_label)
+        root.add_widget(self.distance_label)
+        root.add_widget(self.score_label)
+
+        # Log / info box
+        self.log_box = TextInput(
+            text="Press 'Start Live Simulation' after recording at least one trip.",
+            readonly=True,
+            size_hint_y=None,
+            height=dp(120),
         )
-        self.layout.add_widget(self.title)
+        root.add_widget(self.log_box)
 
-        self.avg_speed_label = Label(
-            text="Average Speed: -- km/h",
-            font_size=16, color=(1, 1, 1, 1), #font_name="EmojiFont"
-        )
-        self.distance_label = Label(
-            text="Distance Travelled: -- km",
-            font_size=16, color=(1, 1, 1, 1), #font_name="EmojiFont"
-        )
-        self.score_label = Label(
-            text="Driver Score: --/100",
-            font_size=16, color=(1, 1, 1, 1), #font_name="EmojiFont"
-        )
+        # Buttons row 1: start / stop
+        btn_row1 = BoxLayout(size_hint_y=None, height=dp(48), spacing=dp(8))
 
-        self.layout.add_widget(self.avg_speed_label)
-        self.layout.add_widget(self.distance_label)
-        self.layout.add_widget(self.score_label)
+        btn_start = Button(text="▶ Load Latest Trip Analytics")
+        btn_start.bind(on_press=self.start_simulation)
+        btn_row1.add_widget(btn_start)
 
-        # Chart
-        self.chart = Image(size_hint=(1, 0.55))
-        self.layout.add_widget(self.chart)
+        btn_stop = Button(text="⏹ Clear")
+        btn_stop.bind(on_press=self.stop_simulation)
+        btn_row1.add_widget(btn_stop)
 
-        # Buttons
-        self.run_button = Button(
-            text="▶️ Start Live Simulation",
-            font_size=16,
-            background_color=(0.0, 0.3, 0.6, 1),
-            #font_name="EmojiFont",
-            on_press=self.start_simulation,
-        )
-        self.stop_button = Button(
-            text="🛑 Stop Simulation",
-            font_size=16,
-            background_color=(0.3, 0, 0, 1),
-            #font_name="EmojiFont",
-            on_press=self.stop_simulation,
-        )
-        self.back_button = Button(
-            text="⬅️ Back to Trip",
-            font_size=16,
-            background_color=(0.15, 0.15, 0.15, 1),
-            #font_name="EmojiFont",
-            on_press=self.go_back,
-        )
+        root.add_widget(btn_row1)
 
-        self.layout.add_widget(self.run_button)
-        self.layout.add_widget(self.stop_button)
-        self.layout.add_widget(self.back_button)
-        self.add_widget(self.layout)
+        # Buttons row 2: back
+        btn_row2 = BoxLayout(size_hint_y=None, height=dp(48), spacing=dp(8))
 
-        Window.bind(on_resize=self.refresh_chart_size)
+        btn_back = Button(text="⬅ Back")
+        btn_back.bind(on_press=self.go_back)
+        btn_row2.add_widget(btn_back)
 
-    # ---------------- Simulation Logic ----------------
-    def start_simulation(self, *args):
-        if not self.running:
-            self.running = True
-            self.run_button.text = "🔵 Running..."
-            self.update_event = Clock.schedule_interval(self.update_data, 2.5)
-            self.update_data(0)
+        root.add_widget(btn_row2)
 
-    def stop_simulation(self, *args):
-        if self.running and self.update_event:
-            Clock.unschedule(self.update_event)
-            self.running = False
-            self.run_button.text = "▶️ Start Live Simulation"
-            self.show_summary_popup()
+        self.add_widget(root)
 
-    def go_back(self, *args):
-        if self.update_event:
-            Clock.unschedule(self.update_event)
-        # back to Trip screen
-        self.manager.current = "trip"
+        self.sim_running = False
 
-    # ---------------- Chart and Analytics ----------------
-    def update_data(self, dt):
-        speeds = [random.randint(60, 130) for _ in range(12)]
-        avg_speed = round(sum(speeds) / len(speeds), 1)
-        distance = round(random.uniform(1, 25), 1)
-        overspeed = len([s for s in speeds if s > 120])
-        score = max(100 - overspeed * 5 - (avg_speed - 80) * 0.4, 0)
+    # --------------------------------------------------
+    # Load REAL metrics from history.json / trip_history.json
+    # --------------------------------------------------
+    def start_simulation(self, *_):
+        self.sim_running = True
 
-        self.avg_speed_label.text = f"Average Speed: {avg_speed} km/h"
-        self.distance_label.text = f"Distance Travelled: {distance} km"
-        self.score_label.text = f"Driver Score: {score:.1f}/100"
+        # 1) Find which history file exists
+        history_path = None
+        for candidate in ("trip_history.json", "history.json"):
+            if os.path.exists(candidate):
+                history_path = candidate
+                break
 
-        # Generate chart to Texture
-        buf = io.BytesIO()
-        plt.figure(figsize=(9, 5), dpi=150)
-        plt.plot(speeds, marker='o', color='limegreen', linewidth=2)
-        plt.title(f"Speed vs Time ⏱️ | Score: {score:.1f}", fontsize=12, pad=10)
-        plt.xlabel("Time Interval", fontsize=10)
-        plt.ylabel("Speed (km/h)", fontsize=10)
-        plt.grid(True, linestyle='--', alpha=0.6)
-        plt.tight_layout()
-        plt.savefig(buf, format='png')
-        plt.close()
+        if not history_path:
+            self.avg_speed_label.text = "Average Speed: -- km/h"
+            self.distance_label.text = "Distance Travelled: -- km"
+            self.score_label.text = "Driver Score: --/100"
+            self.log_box.text = (
+                "No history file found.\n"
+                "Record a trip first, then open Analytics again."
+            )
+            return
 
-        buf.seek(0)
-        # Use rgba texture; kivy will scale it in the Image widget
-        data = buf.read()
-        # Safe fallback: let Kivy load bytes by creating texture from image loader
-        tex = Texture.create(size=(900, 500))
+        # 2) Load the trips
         try:
-            tex.blit_buffer(data, colorfmt='luminance')  # keeps your original approach
-        except Exception:
-            pass
-        self.chart.texture = tex
+            with open(history_path, "r") as f:
+                raw_data = json.load(f)
+        except Exception as e:
+            self.log_box.text = f"Error reading {history_path}: {e}"
+            return
 
-    def refresh_chart_size(self, *args):
-        if self.running:
-            self.update_data(0)
+        if not raw_data:
+            self.avg_speed_label.text = "Average Speed: -- km/h"
+            self.distance_label.text = "Distance Travelled: -- km"
+            self.score_label.text = "Driver Score: --/100"
+            self.log_box.text = f"{history_path} exists but contains no trips yet."
+            return
 
-    # Called by the App after stopping a trip
-    def show_summary_popup(self):
-        popup = Popup(
-            title="Trip Completed ✅",
-            content=Label(
-                text=("🚗 Trip Summary\n\n"
-                      "Average Speed: 85.7 km/h\n"
-                      "Distance: 21.7 km\n"
-                      "Driver Score: 92.7/100\n\n"
-                      "Session Duration: ~30s ⏱️"),
-                #font_name="EmojiFont",
-                color=(1, 1, 1, 1),
-            ),
-            size_hint=(0.75, 0.55),
+        # 3) Normalize to a list of summary dicts
+        trips = []
+        for item in raw_data:
+            if isinstance(item, dict) and "summary" in item:
+                # format: {"timestamp": "...", "summary": {...}}
+                trips.append(item["summary"])
+            else:
+                # format: {...summary fields directly...}
+                trips.append(item)
+
+        if not trips:
+            self.log_box.text = "No valid trip summaries found in history."
+            return
+
+        # 4) Use the most recent trip
+        last_summary = trips[-1]
+
+        total_distance = last_summary.get("total_distance_km", 0)
+        avg_speed = last_summary.get("avg_speed_kmh", 0)
+        score = last_summary.get("safety_score", 0)
+
+        # 5) Update labels with REAL values
+        self.avg_speed_label.text = f"Average Speed: {avg_speed} km/h"
+        self.distance_label.text = f"Distance Travelled: {total_distance} km"
+        self.score_label.text = f"Driver Score: {score}/100"
+
+        self.log_box.text = (
+            f"Loaded latest trip from {history_path}.\n\n"
+            f"- Distance: {total_distance} km\n"
+            f"- Avg speed: {avg_speed} km/h\n"
+            f"- Safety score: {score}/100\n"
         )
-        popup.open()
+
+    def stop_simulation(self, *_):
+        """Just clears the info; no background thread here."""
+        self.sim_running = False
+        self.avg_speed_label.text = "Average Speed: -- km/h"
+        self.distance_label.text = "Distance Travelled: -- km"
+        self.score_label.text = "Driver Score: --/100"
+        self.log_box.text = "Analytics cleared. Press 'Load Latest Trip Analytics' again to reload."
+
+    # --------------------------------------------------
+    # Navigation
+    # --------------------------------------------------
+    def go_back(self, *_):
+        """
+        If this app has a 'dashboard' screen (login_ui_kivy.py flow),
+        go back there. Otherwise fall back to 'trip'.
+        """
+        if not self.manager:
+            return
+
+        names = {s.name for s in self.manager.screens}
+
+        if "dashboard" in names:
+            self.manager.transition.direction = "right"
+            self.manager.current = "dashboard"
+        elif "trip" in names:
+            self.manager.transition.direction = "right"
+            self.manager.current = "trip"

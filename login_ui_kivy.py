@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
 import io
+import json
+import os
+
 import sys
 import requests
 from kivy.app import App
@@ -9,14 +12,14 @@ from kivy.uix.textinput import TextInput
 from kivy.uix.button import Button
 from kivy.uix.popup import Popup
 from kivy.uix.screenmanager import ScreenManager, Screen, FadeTransition
+from data_buffer import DataBuffer
+
 
 # Import other project modules
-import main
 from analytics_screen import AnalyticsScreen
 from trip_screen import TripRecordingScreen
 from trip_summary_screen import TripSummaryScreen
 from sensors_listeners import SensorListener
-
 
 API_URL = "http://127.0.0.1:5050/login"
 
@@ -32,8 +35,19 @@ class LoginScreen(Screen):
         layout.add_widget(Label(text="Driver Analytics", font_size=28, bold=True))
         layout.add_widget(Label(text="Login to continue", font_size=18))
 
-        self.email_input = TextInput(hint_text="Email", multiline=False, size_hint_y=None, height=40)
-        self.password_input = TextInput(hint_text="Password", password=True, multiline=False, size_hint_y=None, height=40)
+        self.email_input = TextInput(
+            hint_text="Email",
+            multiline=False,
+            size_hint_y=None,
+            height=40
+        )
+        self.password_input = TextInput(
+            hint_text="Password",
+            password=True,
+            multiline=False,
+            size_hint_y=None,
+            height=40
+        )
 
         login_btn = Button(text="Login", size_hint_y=None, height=45)
         login_btn.bind(on_press=self.handle_login)
@@ -70,8 +84,12 @@ class LoginScreen(Screen):
                 msg = resp.json().get("error") or resp.text
                 self.show_popup("Error", msg)
 
-        except requests.exceptions.RequestException as e:
-            self.show_popup("Error", f"Connection error: {e}")
+        except requests.exceptions.RequestException:
+            self.show_popup(
+                "Error",
+                "Could not reach the server.\n"
+                "Make sure the backend (Flask) is running on 127.0.0.1:5050."
+            )
 
     def show_popup(self, title, message):
         Popup(
@@ -129,13 +147,43 @@ class DashboardScreen(Screen):
         self.manager.current = "login"
 
     def open_trip_summary(self, *_):
-        samples = [
-            {"speed": 42.0, "brake_events": 0, "harsh_accel": 0, "distance_km": 1.2},
-            {"speed": 55.0, "brake_events": 1, "harsh_accel": 0, "distance_km": 2.0},
-            {"speed": 61.0, "brake_events": 0, "harsh_accel": 1, "distance_km": 1.6},
-        ]
+        """
+        Open the Trip Summary screen using the **latest saved trip**
+        from history.json. If no history exists, show a friendly message.
+        """
+        history_path = "history.json"
+
+        if not os.path.exists(history_path):
+            # No history yet → show empty state
+            ts = self.manager.get_screen("trip_summary")
+            ts.set_summary(None)
+            self.manager.transition.direction = "left"
+            self.manager.current = "trip_summary"
+            return
+
+        try:
+            with open(history_path, "r") as f:
+                history = json.load(f)
+        except Exception as e:
+            print(f"[Dashboard] Failed to read history.json: {e}")
+            ts = self.manager.get_screen("trip_summary")
+            ts.set_summary(None)
+            self.manager.transition.direction = "left"
+            self.manager.current = "trip_summary"
+            return
+
+        if not history:
+            ts = self.manager.get_screen("trip_summary")
+            ts.set_summary(None)
+            self.manager.transition.direction = "left"
+            self.manager.current = "trip_summary"
+            return
+
+        # Use the most recent trip summary
+        last_summary = history[-1]
+
         ts = self.manager.get_screen("trip_summary")
-        ts.set_samples(samples)
+        ts.set_summary(last_summary)
         self.manager.transition.direction = "left"
         self.manager.current = "trip_summary"
 
@@ -146,25 +194,21 @@ class DashboardScreen(Screen):
 class DriverApp(App):
 
     def build(self):
-        self.sensor_listener = SensorListener()  # ✅ Add sensor manager
+        self.sensor_listener = SensorListener()
+
+        # 👉 create one shared DataBuffer instance
+        self.data_buffer = DataBuffer()
 
         sm = ScreenManager(transition=FadeTransition())
         sm.add_widget(LoginScreen(name="login"))
         sm.add_widget(DashboardScreen(name="dashboard"))
         sm.add_widget(AnalyticsScreen(name="analytics"))
         sm.add_widget(TripSummaryScreen(name="trip_summary"))
-        sm.add_widget(TripRecordingScreen(name="trip"))  # Live telemetry screen
+
+        # pass buffer into TripRecordingScreen
+        sm.add_widget(TripRecordingScreen(name="trip", data_buffer=self.data_buffer))
 
         return sm
-
-    # Called from TripRecordingScreen
-    def start_trip_recording(self):
-        print("DriverApp → Starting sensors...")
-        self.sensor_listener.start_listeners()
-
-    def stop_trip_recording(self):
-        print("DriverApp → Stopping sensors...")
-        self.sensor_listener.stop_listeners()
 
 
 if __name__ == "__main__":

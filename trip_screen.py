@@ -9,15 +9,23 @@ from kivy.clock import Clock
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.button import Button
 from kivy.uix.label import Label
-from kivy.uix.screenmanager import Screen
+from kivy.uix.screenmanager import Screen, ScreenManagerException
 from kivy.uix.popup import Popup
 
 from permissions_manager import has_required_permissions
+from trip_summary_utils import compute_summary   # 👈 NEW
 
 
 class TripRecordingScreen(Screen):
-    def __init__(self, **kwargs):
+    def __init__(self, data_buffer=None, **kwargs):
+        """
+        data_buffer is optional. When provided (from DriverApp/main.py),
+        we’ll use it to store real-time samples + final trip summary.
+        """
         super().__init__(**kwargs)
+
+        # keep a reference to DataBuffer if someone passes it in
+        self.data_buffer = data_buffer
 
         self.layout = BoxLayout(orientation="vertical", padding=25, spacing=15)
 
@@ -93,18 +101,15 @@ class TripRecordingScreen(Screen):
         """
         Start a new trip if not already recording and permissions are valid.
         """
-        # Already running? ignore extra taps → prevents double-start
         if self.running:
             return
 
         # ✅ Check permissions before starting trip
         if not has_required_permissions():
-            # Show error text + popup
             self.error_label.text = "⚠ Permission required: enable Location + Motion to start a trip."
             self.show_permission_error()
             return
         else:
-            # Clear any previous error
             self.error_label.text = ""
 
         # Reset previous trip state
@@ -126,33 +131,29 @@ class TripRecordingScreen(Screen):
         self._thread.start()
 
     # ------------------------------------------------------
-    # STOP BUTTON → Go to Summary
+    # STOP BUTTON → Go to Summary + SAVE TRIP
     # ------------------------------------------------------
     def _stop_clicked(self, *_):
         """
-        Stop the trip if currently recording and navigate to summary screen.
+        Stop the trip if currently recording, save it to history.json,
+        and navigate to the summary screen.
         """
-        # If not recording, ignore → prevents invalid stop
         if not self.running:
             return
 
         self.running = False
 
-        # Update buttons back to idle state
+        # Reset buttons
         self.start_btn.text = "▶️ Start Trip"
         self.start_btn.disabled = False
         self.stop_btn.disabled = True
-
-        # Clear error (if any)
         self.error_label.text = ""
 
-        # DELETE autosave file if it exists
+        # Remove autosave JSON if present
         if os.path.exists("autosave.json"):
             os.remove("autosave.json")
 
-        # --------------------------------------------------
-        # 🔥 TASK 74: Build CLEAN sample list for summary
-        # --------------------------------------------------
+        # Build a CLEAN sample list for Tonse's summary/scoring
         summary_samples = []
         for s in self.samples:
             summary_samples.append({
@@ -162,25 +163,40 @@ class TripRecordingScreen(Screen):
                 "distance_km": s["dist"]
             })
 
-        # Even if no samples, still handle gracefully
-        if not summary_samples:
-            print("No samples recorded for this trip.")
+        # Compute final summary (distance, avg speed, score, etc.)
+        summary = compute_summary(summary_samples)
 
-        # Send data to summary screen (Tonse's part)
-        trip_summary = self.manager.get_screen("trip_summary")
-        trip_summary.set_samples(summary_samples)
+        # ✅ If we have a DataBuffer instance → save this trip to history.json
+        if self.data_buffer is not None:
+            try:
+                self.data_buffer.save_completed_trip(summary)
+                print("Saved completed trip to history.json")
+            except Exception as e:
+                print(f"[TripRecordingScreen] Failed to save trip to history.json: {e}")
 
-        # Navigate to summary
-        self.manager.transition.direction = "left"
-        self.manager.current = "trip_summary"
+        # Send data to summary screen
+        summary_screen = None
+        try:
+            # Name used in login_ui_kivy.py
+            summary_screen = self.manager.get_screen("trip_summary")
+        except ScreenManagerException:
+            try:
+                # Name used in main.py
+                summary_screen = self.manager.get_screen("summary")
+            except ScreenManagerException:
+                print("No TripSummaryScreen found with name 'trip_summary' or 'summary'.")
+
+        if summary_screen is not None:
+            summary_screen.set_summary(summary)
+
+            # Navigate to summary screen
+            self.manager.transition.direction = "left"
+            self.manager.current = summary_screen.name
 
     # ------------------------------------------------------
     # PERMISSION ERROR POPUP
     # ------------------------------------------------------
     def show_permission_error(self):
-        """
-        Show a popup explaining that location/motion permissions are required.
-        """
         box = BoxLayout(orientation="vertical", padding=20, spacing=10)
 
         msg = Label(
@@ -230,6 +246,18 @@ class TripRecordingScreen(Screen):
             }
             self.samples.append(sample)
 
+            # If we have a DataBuffer, also push this into the live buffer
+            if self.data_buffer is not None:
+                try:
+                    self.data_buffer.add_entry({
+                        "speed": sample["speed"],
+                        "brake_events": sample["brake"],
+                        "harsh_accel": sample["harsh"],
+                        "distance_km": sample["dist"],
+                    })
+                except Exception as e:
+                    print(f"[TripRecordingScreen] add_entry error: {e}")
+
             # Schedule UI update
             Clock.schedule_once(
                 lambda dt, ax=ax, ay=ay, az=az,
@@ -268,7 +296,7 @@ class TripRecordingScreen(Screen):
         print("Auto-saved trip data.")
 
     # ------------------------------------------------------
-    # LOAD SAVED TRIP (for resume)
+    # LOAD SAVED TRIP (for resume) – optional
     # ------------------------------------------------------
     def load_saved_trip(self):
         """Load previously saved data if available."""

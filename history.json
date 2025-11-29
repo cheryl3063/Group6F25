@@ -1,0 +1,9 @@
+[
+  {
+    "total_distance_km": 20.55,
+    "avg_speed_kmh": 59.1,
+    "brake_events": 31,
+    "harsh_accel": 25,
+    "safety_score": 0
+  }
+]
