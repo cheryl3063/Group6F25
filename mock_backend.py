@@ -1,16 +1,11 @@
-# mock_backend.py
 import json
 import os
 
-# Path for mock saved trip file
 SAVE_FILE = "latest_trip.json"
 
 
-# =========================================================
-#  WEEKLY TREND DATA  (Phase 2 requirement)
-# =========================================================
 def load_weekly_history():
-    """Return static weekly performance trend."""
+    """Static weekly performance trend for InsightsScreen."""
     return [
         {"day": "Mon", "score": 82},
         {"day": "Tue", "score": 90},
@@ -22,34 +17,31 @@ def load_weekly_history():
     ]
 
 
-# =========================================================
-#  SAVE CURRENT TRIP SUMMARY
-# =========================================================
-def save_latest_trip(data):
+def save_latest_trip(summary):
     """
-    Save trip summary (computed in Trip Summary Screen)
-    so ScoreScreen can reload it.
+    Save last summary for ScoreScreen.
+    summary is expected to be:
+    {
+        "total_distance_km": ...,
+        "avg_speed_kmh": ...,
+        "brake_events": ...,
+        "harsh_accel": ...,
+        "safety_score": ...
+        (optional) "timestamp": ...
+    }
     """
     try:
         with open(SAVE_FILE, "w") as f:
-            json.dump(data, f)
+            json.dump(summary, f, indent=2)
         return True
     except Exception as exc:
         print(f"[mock_backend] Failed to save trip: {exc}")
         return False
 
 
-# =========================================================
-#  LOAD LAST SAVED TRIP SUMMARY
-# =========================================================
 def load_latest_trip():
-    """
-    Load summary for ScoreScreen.
-    Returns None if file doesn't exist.
-    """
     if not os.path.exists(SAVE_FILE):
         return None
-
     try:
         with open(SAVE_FILE, "r") as f:
             return json.load(f)

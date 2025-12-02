@@ -16,6 +16,7 @@ from kivy.animation import Animation
 from analytics_screen import AnalyticsScreen
 from trip_screen import TripRecordingScreen
 from trip_summary_screen import TripSummaryScreen
+from trip_history_screen import TripHistoryScreen
 from score_screen import ScoreScreen
 from insights_screen import InsightsScreen
 
@@ -27,11 +28,9 @@ API_URL = "http://127.0.0.1:5050/login"
 # =====================================================================
 class TopMenuMixin:
     def build_top_menu(self, layout):
-        """Attach a top hamburger menu to a screen."""
         parent = FloatLayout()
         parent.add_widget(layout)
 
-        # MENU BUTTON (top-right)
         self.menu_btn = Button(
             text="☰",
             size_hint=(None, None),
@@ -44,7 +43,6 @@ class TopMenuMixin:
         self.menu_btn.bind(on_press=self.toggle_menu)
         parent.add_widget(self.menu_btn)
 
-        # MENU PANEL (slides down)
         self.menu_panel = BoxLayout(
             orientation='vertical',
             size_hint=(1, None),
@@ -77,11 +75,12 @@ class TopMenuMixin:
             return b
 
         self.menu_panel.add_widget(menu_btn("🏠 Dashboard", "dashboard"))
-        self.menu_panel.add_widget(menu_btn("🚗 Trip Recording", "trip_recording"))
+        self.menu_panel.add_widget(menu_btn("🚗 Trip Recording", "trip"))
         self.menu_panel.add_widget(menu_btn("📊 Analytics", "analytics"))
         self.menu_panel.add_widget(menu_btn("📈 Insights & Trends", "insights"))
         self.menu_panel.add_widget(menu_btn("📄 Trip Summary", "trip_summary"))
         self.menu_panel.add_widget(menu_btn("⭐ Score", "score"))
+        self.menu_panel.add_widget(menu_btn("📚 History", "history"))
         self.menu_panel.add_widget(menu_btn("🔒 Logout", "login"))
 
         parent.add_widget(self.menu_panel)
@@ -89,7 +88,7 @@ class TopMenuMixin:
 
     def toggle_menu(self, *_):
         if self.menu_panel.height == 0:
-            Animation(height=dp(330), d=0.25).start(self.menu_panel)
+            Animation(height=dp(340), d=0.25).start(self.menu_panel)
         else:
             Animation(height=0, d=0.25).start(self.menu_panel)
 
@@ -111,14 +110,12 @@ class LoginScreen(Screen):
             text="🚗 Driver Analytics",
             font_size=32,
             bold=True,
-            color=(1, 1, 1, 1),
             size_hint_y=None,
             height=dp(48)
         ))
         root.add_widget(Label(
             text="Sign in to continue",
             font_size=18,
-            color=(0.8, 0.8, 0.8, 1),
             size_hint_y=None,
             height=dp(30)
         ))
@@ -126,9 +123,9 @@ class LoginScreen(Screen):
         self.email_input = TextInput(
             hint_text="Email Address",
             multiline=False,
-            height=dp(52),
+            height=dp(40),
             size_hint_y=None,
-            font_size=16,
+            font_size=20,
             background_color=(0.15, 0.15, 0.15, 1),
             foreground_color=(1, 1, 1, 1)
         )
@@ -136,10 +133,10 @@ class LoginScreen(Screen):
         self.password_input = TextInput(
             hint_text="Password",
             multiline=False,
-            height=dp(52),
+            height=dp(40),
             size_hint_y=None,
             password=True,
-            font_size=16,
+            font_size=20,
             background_color=(0.15, 0.15, 0.15, 1),
             foreground_color=(1, 1, 1, 1)
         )
@@ -161,9 +158,35 @@ class LoginScreen(Screen):
         self.add_widget(root)
 
     def handle_login(self, instance):
-        # Demo login (no real backend)
-        print("🔓 Demo login: bypassing auth.")
-        self.manager.current = "dashboard"
+        email = self.email_input.text.strip()
+        password = self.password_input.text.strip()
+
+        if not email or not password:
+            self.show_popup("Error", "Please enter both email and password.")
+            return
+
+        if not email.endswith("@gmail.com"):
+            self.show_popup("Error", "Please enter a valid Gmail address ending with '@gmail.com'.")
+            return
+
+        try:
+            resp = requests.post(API_URL, json={"email": email, "password": password}, timeout=10)
+
+            if resp.status_code == 200:
+                data = resp.json()
+                uid = data.get("uid", "N/A")
+                self.manager.get_screen("dashboard").set_user(email, uid)
+                self.manager.transition.direction = "left"
+                self.manager.current = "dashboard"
+            else:
+                try:
+                    msg = resp.json().get("error")
+                except Exception:
+                    msg = resp.text
+                self.show_popup("Error", msg)
+
+        except requests.exceptions.RequestException as e:
+            self.show_popup("Error", f"Connection error: {e}")
 
     def show_popup(self, title, message):
         Popup(
@@ -186,15 +209,14 @@ class DashboardScreen(Screen):
             spacing=dp(20)
         )
 
-        title = Label(
+        self.label = Label(
             text="🏠 Dashboard",
             font_size=32,
             bold=True,
-            color=(1, 1, 1, 1),
             size_hint_y=None,
             height=dp(50)
         )
-        root.add_widget(title)
+        root.add_widget(self.label)
 
         card = BoxLayout(
             orientation="vertical",
@@ -218,7 +240,7 @@ class DashboardScreen(Screen):
             btn = Button(
                 text=f"{icon}  {text}",
                 font_size=20,
-                height=dp(56),
+                height=dp(46),
                 size_hint_y=None,
                 background_color=(0.18, 0.18, 0.18, 1),
                 color=(1, 1, 1, 1)
@@ -226,10 +248,10 @@ class DashboardScreen(Screen):
             btn.bind(on_press=lambda *_: setattr(self.manager, "current", target))
             return btn
 
-        card.add_widget(make_btn("Start Trip Recording", "🚗", "trip_recording"))
+        card.add_widget(make_btn("Start Trip Recording", "🚗", "trip"))
         card.add_widget(make_btn("View Analytics", "📊", "analytics"))
         card.add_widget(make_btn("Insights & Trends", "📈", "insights"))
-        card.add_widget(make_btn("Trip Summary", "📄", "trip_summary"))
+        card.add_widget(make_btn("Trip History", "📚", "history"))
         card.add_widget(make_btn("Driver Score", "⭐", "score"))
 
         logout_btn = Button(
@@ -246,6 +268,9 @@ class DashboardScreen(Screen):
         root.add_widget(card)
         self.add_widget(root)
 
+    def set_user(self, email, uid):
+        self.label.text = f"🏠 Dashboard\n👋 {email} (ID: {uid})"
+
 
 # =====================================================================
 #                        MAIN APP
@@ -257,29 +282,27 @@ class DriverApp(App):
         sm.add_widget(LoginScreen(name="login"))
         sm.add_widget(DashboardScreen(name="dashboard"))
 
-        sm.add_widget(self.wrap_with_menu(TripRecordingScreen(name="trip_recording")))
+        # Hybrid: trip + summary + history without menu
+        sm.add_widget(TripRecordingScreen(name="trip"))
+        sm.add_widget(TripSummaryScreen(name="trip_summary"))
+        sm.add_widget(TripHistoryScreen(name="history"))
+
+        # Analytics / score / insights with hamburger menu
         sm.add_widget(self.wrap_with_menu(AnalyticsScreen(name="analytics")))
-        sm.add_widget(self.wrap_with_menu(TripSummaryScreen(name="trip_summary")))
         sm.add_widget(self.wrap_with_menu(ScoreScreen(name="score")))
         sm.add_widget(self.wrap_with_menu(InsightsScreen(name="insights")))
 
         return sm
 
     def wrap_with_menu(self, screen):
-        """
-        Attach hamburger menu to an existing Screen instance
-        without breaking its attributes (.running etc).
-        """
         original_class = screen.__class__
 
-        # Dynamically create a new class that mixes TopMenuMixin + original Screen class
         screen.__class__ = type(
             original_class.__name__,
             (TopMenuMixin, original_class),
             {}
         )
 
-        # Assume each screen has a single root layout child
         original_layout = screen.children[0]
         screen.remove_widget(original_layout)
 

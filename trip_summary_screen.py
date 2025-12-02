@@ -16,7 +16,6 @@ class TripSummaryScreen(Screen):
         self.summary = None
         self.samples = []
 
-        # Root container
         root = BoxLayout(
             orientation="vertical",
             padding=dp(32),
@@ -25,17 +24,15 @@ class TripSummaryScreen(Screen):
             pos_hint={"center_x": 0.5, "center_y": 0.5}
         )
 
-        # Background card
         with root.canvas.before:
             Color(0.12, 0.12, 0.12, 0.92)
             self.bg_rect = RoundedRectangle(radius=[20])
 
         root.bind(pos=self._update_bg, size=self._update_bg)
 
-        # Title
         title = Label(
             text="📄 Trip Summary",
-            font_size=34,
+            font_size=30,
             bold=True,
             color=(1, 1, 1, 1),
             size_hint_y=None,
@@ -43,18 +40,17 @@ class TripSummaryScreen(Screen):
         )
         root.add_widget(title)
 
-        # Metrics block
         self.metrics = Label(
             text="No data yet.",
-            font_size=22,
+            font_size=20,
             color=(0.92, 0.92, 0.92, 1),
             halign="center",
-            valign="middle"
+            valign="middle",
+            markup=True
         )
         self.metrics.bind(size=lambda *_: setattr(self.metrics, "text_size", self.metrics.size))
         root.add_widget(self.metrics)
 
-        # Button row
         btn_row = BoxLayout(
             orientation="horizontal",
             spacing=dp(16),
@@ -63,26 +59,26 @@ class TripSummaryScreen(Screen):
         )
 
         back_btn = Button(
-            text="⬅ Back",
-            font_size=20,
+            text="⬅ Dashboard",
+            font_size=18,
             background_color=(0.22, 0.22, 0.22, 1),
             color=(1, 1, 1, 1)
         )
         back_btn.bind(on_press=lambda *_: setattr(self.manager, "current", "dashboard"))
         btn_row.add_widget(back_btn)
 
-        recalc_btn = Button(
-            text="↻ Recompute",
-            font_size=20,
-            background_color=(0.10, 0.45, 0.82, 1),
+        history_btn = Button(
+            text="📚 History",
+            font_size=18,
+            background_color=(0.15, 0.4, 0.8, 1),
             color=(1, 1, 1, 1)
         )
-        recalc_btn.bind(on_press=lambda *_: self._render())
-        btn_row.add_widget(recalc_btn)
+        history_btn.bind(on_press=lambda *_: setattr(self.manager, "current", "history"))
+        btn_row.add_widget(history_btn)
 
         score_btn = Button(
             text="⭐ Score",
-            font_size=20,
+            font_size=18,
             background_color=(0.90, 0.68, 0.15, 1),
             color=(1, 1, 1, 1)
         )
@@ -96,53 +92,50 @@ class TripSummaryScreen(Screen):
         self.bg_rect.pos = self.children[0].pos
         self.bg_rect.size = self.children[0].size
 
+    # -------- APIs --------
     def set_summary(self, summary):
-        """Keep HEAD logic with timestamp formatting."""
+        """
+        Receives a summary dict (usually from TripManager or history),
+        optionally containing 'timestamp'.
+        """
         self.summary = summary
-
-        self.metrics.text = (
-            f"[b]{summary['timestamp']}[/b]\n\n"
-            f"• Distance: {summary['total_distance_km']} km\n"
-            f"• Avg Speed: {summary['avg_speed_kmh']} km/h\n"
-            f"• Brake Events: {summary['brake_events']}\n"
-            f"• Harsh Accel: {summary['harsh_accel']}\n\n"
-            f"⭐ Safety Score: [b]{summary['safety_score']}[/b]"
-        )
+        self.samples = []  # reset
+        self._render_from_summary()
 
     def set_samples(self, samples):
+        """
+        Optional: compute summary from raw samples using compute_summary().
+        """
         self.samples = samples or []
-        self._render()
+        self.summary = compute_summary(self.samples)
+        self._render_from_summary()
 
-    def _render(self):
-        """Use backup UI logic + HEAD summary computation."""
-        s = compute_summary(self.samples)
+    def _render_from_summary(self):
+        if not self.summary:
+            self.metrics.text = "No data yet."
+            return
+
+        s = self.summary
+        timestamp = s.get("timestamp", "Most recent trip")
 
         self.metrics.text = (
+            f"[b]{timestamp}[/b]\n\n"
             f"• Distance: {s['total_distance_km']} km\n"
             f"• Avg Speed: {s['avg_speed_kmh']} km/h\n"
             f"• Brake Events: {s['brake_events']}\n"
             f"• Harsh Accel: {s['harsh_accel']}\n\n"
-            f"⭐ Safety Score: {s['safety_score']}"
+            f"⭐ Safety Score: [b]{s['safety_score']}[/b]"
         )
 
-        # Save for insights screen
-        save_latest_trip({
-            "total_distance_km": s["total_distance_km"],
-            "avg_speed_kmh": s["avg_speed_kmh"],
-            "brake_events": s["brake_events"],
-            "harsh_accel": s["harsh_accel"],
-            "safety_score": s["safety_score"]
-        })
+        # Save for Score & Insights screens
+        save_latest_trip(s)
 
-        # Auto-update score screen
-        score_screen = self.manager.get_screen("score")
-        score_screen.update_score({
-            "score": s["safety_score"],
-            "avg_speed": s["avg_speed_kmh"],
-            "distance_km": s["total_distance_km"],
-            "brake_events": s["brake_events"],
-            "harsh_accel": s["harsh_accel"]
-        })
+        # Auto-update score screen if present
+        try:
+            score_screen = self.manager.get_screen("score")
+            score_screen.update_score(s)
+        except Exception:
+            pass
 
     def go_to_score(self, *_):
         self.manager.current = "score"
