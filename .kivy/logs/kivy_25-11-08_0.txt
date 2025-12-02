@@ -1,0 +1,40 @@
+[INFO   ] Logger: Record log in C:\Users\divin\Desktop\Group6F25\.kivy\logs\kivy_25-11-08_0.txt
+[INFO   ] deps: Successfully imported "kivy_deps.angle" 0.5.0
+[INFO   ] deps: Successfully imported "kivy_deps.glew" 0.3.1
+[INFO   ] deps: Successfully imported "kivy_deps.sdl3" 0.0.10
+[INFO   ] Kivy: v3.0.0.dev0
+[INFO   ] Kivy: Installed at "C:\Users\divin\Desktop\Group6F25\.venv\Lib\site-packages\kivy\__init__.py"
+[INFO   ] Python: v3.14.0 (tags/v3.14.0:ebf955d, Oct  7 2025, 10:15:03) [MSC v.1944 64 bit (AMD64)]
+[INFO   ] Python: Interpreter at "C:\Users\divin\Desktop\Group6F25\.venv\Scripts\python.exe"
+[INFO   ] Logger: Purge log fired. Processing...
+[INFO   ] Logger: Purge finished!
+[INFO   ] Factory: 198 symbols loaded
+[INFO   ] Image: Providers: img_tex, img_dds, img_sdl3, img_pil (img_ffpyplayer ignored)
+[INFO   ] Text: Provider: sdl3
+[INFO   ] Loader: using a thread pool of 2 workers
+[INFO   ] Window: Provider: sdl3
+[INFO   ] GL: Using the "OpenGL" graphics system
+[INFO   ] GL: GLEW initialization succeeded
+[INFO   ] GL: Backend used <glew>
+[INFO   ] GL: OpenGL version <b'4.6.0 - Build 32.0.101.6881'>
+[INFO   ] GL: OpenGL vendor <b'Intel'>
+[INFO   ] GL: OpenGL renderer <b'Intel(R) Iris(R) Xe Graphics'>
+[INFO   ] GL: OpenGL parsed version: 4, 6
+[INFO   ] GL: Shading version <b'4.60 - Build 32.0.101.6881'>
+[INFO   ] GL: Texture max size <16384>
+[INFO   ] GL: Texture max units <32>
+[INFO   ] Window: auto add sdl3 input provider
+[INFO   ] Window: virtual keyboard not allowed, single mode, not docked
+[DEBUG  ] matplotlib data path: C:\Users\divin\Desktop\Group6F25\.venv\Lib\site-packages\matplotlib\mpl-data
+[DEBUG  ] CONFIGDIR=C:\Users\divin\.matplotlib
+[DEBUG  ] interactive is False
+[DEBUG  ] platform is win32
+[DEBUG  ] CACHEDIR=C:\Users\divin\.matplotlib
+[DEBUG  ] Using fontManager instance from C:\Users\divin\.matplotlib\fontlist-v390.json
+[INFO   ] GL: NPOT texture support is available
+[INFO   ] Base: Start application main loop
+[INFO   ] WindowSDL: Window pixel size changed
+[INFO   ] WindowSDL: Window display scale changed
+[DEBUG  ] Starting new HTTP connection (1): 127.0.0.1:5000
+[DEBUG  ] http://127.0.0.1:5000 "POST /login HTTP/1.1" 200 112
+[INFO   ] Base: Leaving application in progress...

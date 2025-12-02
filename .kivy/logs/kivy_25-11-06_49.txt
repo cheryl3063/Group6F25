@@ -1,0 +1,101 @@
+[INFO   ] Logger: Record log in C:\Users\divin\Desktop\Group6F25\.kivy\logs\kivy_25-11-06_49.txt
+[INFO   ] deps: Successfully imported "kivy_deps.angle" 0.5.0
+[INFO   ] deps: Successfully imported "kivy_deps.glew" 0.3.1
+[INFO   ] deps: Successfully imported "kivy_deps.sdl3" 0.0.10
+[INFO   ] Kivy: v3.0.0.dev0
+[INFO   ] Kivy: Installed at "C:\Users\divin\Desktop\Group6F25\.venv\Lib\site-packages\kivy\__init__.py"
+[INFO   ] Python: v3.14.0 (tags/v3.14.0:ebf955d, Oct  7 2025, 10:15:03) [MSC v.1944 64 bit (AMD64)]
+[INFO   ] Python: Interpreter at "C:\Users\divin\Desktop\Group6F25\.venv\Scripts\python.exe"
+[INFO   ] Logger: Purge log fired. Processing...
+[INFO   ] Logger: Purge finished!
+[INFO   ] Factory: 198 symbols loaded
+[INFO   ] Image: Providers: img_tex, img_dds, img_sdl3 (img_pil, img_ffpyplayer ignored)
+[INFO   ] Text: Provider: sdl3
+[INFO   ] Loader: using a thread pool of 2 workers
+[INFO   ] Window: Provider: sdl3
+[INFO   ] GL: Using the "OpenGL" graphics system
+[INFO   ] GL: GLEW initialization succeeded
+[INFO   ] GL: Backend used <glew>
+[INFO   ] GL: OpenGL version <b'4.6.0 - Build 32.0.101.6881'>
+[INFO   ] GL: OpenGL vendor <b'Intel'>
+[INFO   ] GL: OpenGL renderer <b'Intel(R) Iris(R) Xe Graphics'>
+[INFO   ] GL: OpenGL parsed version: 4, 6
+[INFO   ] GL: Shading version <b'4.60 - Build 32.0.101.6881'>
+[INFO   ] GL: Texture max size <16384>
+[INFO   ] GL: Texture max units <32>
+[INFO   ] Window: auto add sdl3 input provider
+[INFO   ] Window: virtual keyboard not allowed, single mode, not docked
+[INFO   ] GL: NPOT texture support is available
+[INFO   ] Base: Start application main loop
+[INFO   ] WindowSDL: Window pixel size changed
+[INFO   ] WindowSDL: Window display scale changed
+[DEBUG  ] Starting new HTTP connection (1): 127.0.0.1:5000
+[DEBUG  ] http://127.0.0.1:5000 "POST /login HTTP/1.1" 200 112
+[INFO   ] Base: Leaving application in progress...
+[WARNING] stderr: Traceback (most recent call last):
+[WARNING] stderr:   File "C:\Users\divin\Desktop\Group6F25\login_ui_kivy.py", line 142, in <module>
+[WARNING] stderr:     DriverApp().run()
+[WARNING] stderr:     ~~~~~~~~~~~~~~~^^
+[WARNING] stderr:   File "C:\Users\divin\Desktop\Group6F25\.venv\Lib\site-packages\kivy\app.py", line 962, in run
+[WARNING] stderr:     runTouchApp()
+[WARNING] stderr:     ~~~~~~~~~~~^^
+[WARNING] stderr:   File "C:\Users\divin\Desktop\Group6F25\.venv\Lib\site-packages\kivy\base.py", line 574, in runTouchApp
+[WARNING] stderr:     EventLoop.mainloop()
+[WARNING] stderr:     ~~~~~~~~~~~~~~~~~~^^
+[WARNING] stderr:   File "C:\Users\divin\Desktop\Group6F25\.venv\Lib\site-packages\kivy\base.py", line 339, in mainloop
+[WARNING] stderr:     self.idle()
+[WARNING] stderr:     ~~~~~~~~~^^
+[WARNING] stderr:   File "C:\Users\divin\Desktop\Group6F25\.venv\Lib\site-packages\kivy\base.py", line 383, in idle
+[WARNING] stderr:     self.dispatch_input()
+[WARNING] stderr:     ~~~~~~~~~~~~~~~~~~~^^
+[WARNING] stderr:   File "C:\Users\divin\Desktop\Group6F25\.venv\Lib\site-packages\kivy\base.py", line 334, in dispatch_input
+[WARNING] stderr:     post_dispatch_input(*pop(0))
+[WARNING] stderr:     ~~~~~~~~~~~~~~~~~~~^^^^^^^^^
+[WARNING] stderr:   File "C:\Users\divin\Desktop\Group6F25\.venv\Lib\site-packages\kivy\base.py", line 263, in post_dispatch_input
+[WARNING] stderr:     listener.dispatch('on_motion', etype, me)
+[WARNING] stderr:     ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^
+[WARNING] stderr:   File "kivy\\_event.pyx", line 730, in kivy._event.EventDispatcher.dispatch
+[WARNING] stderr:   File "C:\Users\divin\Desktop\Group6F25\.venv\Lib\site-packages\kivy\core\window\__init__.py", line 1716, in on_motion
+[WARNING] stderr:     self.dispatch('on_touch_down', me)
+[WARNING] stderr:     ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^
+[WARNING] stderr:   File "kivy\\_event.pyx", line 730, in kivy._event.EventDispatcher.dispatch
+[WARNING] stderr:   File "C:\Users\divin\Desktop\Group6F25\.venv\Lib\site-packages\kivy\core\window\__init__.py", line 1733, in on_touch_down
+[WARNING] stderr:     if w.dispatch('on_touch_down', touch):
+[WARNING] stderr:        ~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^
+[WARNING] stderr:   File "kivy\\_event.pyx", line 730, in kivy._event.EventDispatcher.dispatch
+[WARNING] stderr:   File "C:\Users\divin\Desktop\Group6F25\.venv\Lib\site-packages\kivy\uix\screenmanager.py", line 1204, in on_touch_down
+[WARNING] stderr:     return super(ScreenManager, self).on_touch_down(touch)
+[WARNING] stderr:            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^
+[WARNING] stderr:   File "C:\Users\divin\Desktop\Group6F25\.venv\Lib\site-packages\kivy\uix\widget.py", line 589, in on_touch_down
+[WARNING] stderr:     if child.dispatch('on_touch_down', touch):
+[WARNING] stderr:        ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^
+[WARNING] stderr:   File "kivy\\_event.pyx", line 730, in kivy._event.EventDispatcher.dispatch
+[WARNING] stderr:   File "C:\Users\divin\Desktop\Group6F25\.venv\Lib\site-packages\kivy\uix\relativelayout.py", line 306, in on_touch_down
+[WARNING] stderr:     ret = super(RelativeLayout, self).on_touch_down(touch)
+[WARNING] stderr:   File "C:\Users\divin\Desktop\Group6F25\.venv\Lib\site-packages\kivy\uix\widget.py", line 589, in on_touch_down
+[WARNING] stderr:     if child.dispatch('on_touch_down', touch):
+[WARNING] stderr:        ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^
+[WARNING] stderr:   File "kivy\\_event.pyx", line 730, in kivy._event.EventDispatcher.dispatch
+[WARNING] stderr:   File "C:\Users\divin\Desktop\Group6F25\.venv\Lib\site-packages\kivy\uix\widget.py", line 589, in on_touch_down
+[WARNING] stderr:     if child.dispatch('on_touch_down', touch):
+[WARNING] stderr:        ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^
+[WARNING] stderr:   File "kivy\\_event.pyx", line 730, in kivy._event.EventDispatcher.dispatch
+[WARNING] stderr:   File "C:\Users\divin\Desktop\Group6F25\.venv\Lib\site-packages\kivy\uix\behaviors\button.py", line 151, in on_touch_down
+[WARNING] stderr:     self.dispatch('on_press')
+[WARNING] stderr:     ~~~~~~~~~~~~~^^^^^^^^^^^^
+[WARNING] stderr:   File "kivy\\_event.pyx", line 726, in kivy._event.EventDispatcher.dispatch
+[WARNING] stderr:   File "kivy\\_event.pyx", line 1306, in kivy._event.EventObservers.dispatch
+[WARNING] stderr:   File "kivy\\_event.pyx", line 1230, in kivy._event.EventObservers._dispatch
+[WARNING] stderr:   File "C:\Users\divin\Desktop\Group6F25\login_ui_kivy.py", line 124, in open_analytics
+[WARNING] stderr:     self.manager.current = "analytics"
+[WARNING] stderr:     ^^^^^^^^^^^^^^^^^^^^
+[WARNING] stderr:   File "kivy\\properties.pyx", line 520, in kivy.properties.Property.__set__
+[WARNING] stderr:   File "kivy\\properties.pyx", line 567, in kivy.properties.Property.set
+[WARNING] stderr:   File "kivy\\properties.pyx", line 606, in kivy.properties.Property._dispatch
+[WARNING] stderr:   File "kivy\\_event.pyx", line 1306, in kivy._event.EventObservers.dispatch
+[WARNING] stderr:   File "kivy\\_event.pyx", line 1212, in kivy._event.EventObservers._dispatch
+[WARNING] stderr:   File "C:\Users\divin\Desktop\Group6F25\.venv\Lib\site-packages\kivy\uix\screenmanager.py", line 1051, in on_current
+[WARNING] stderr:     screen = self.get_screen(value)
+[WARNING] stderr:   File "C:\Users\divin\Desktop\Group6F25\.venv\Lib\site-packages\kivy\uix\screenmanager.py", line 1077, in get_screen
+[WARNING] stderr:     raise ScreenManagerException('No Screen with name "%s".' % name)
+[WARNING] stderr: kivy.uix.screenmanager.ScreenManagerException: No Screen with name "analytics".

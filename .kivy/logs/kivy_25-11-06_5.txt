@@ -1,0 +1,28 @@
+[INFO   ] Logger: Record log in C:\Users\divin\Desktop\Group6F25\.kivy\logs\kivy_25-11-06_5.txt
+[INFO   ] deps: Successfully imported "kivy_deps.angle" 0.5.0
+[INFO   ] deps: Successfully imported "kivy_deps.glew" 0.3.1
+[INFO   ] deps: Successfully imported "kivy_deps.sdl3" 0.0.10
+[INFO   ] Kivy: v3.0.0.dev0
+[INFO   ] Kivy: Installed at "C:\Users\divin\Desktop\Group6F25\.venv\Lib\site-packages\kivy\__init__.py"
+[INFO   ] Python: v3.14.0 (tags/v3.14.0:ebf955d, Oct  7 2025, 10:15:03) [MSC v.1944 64 bit (AMD64)]
+[INFO   ] Python: Interpreter at "C:\Users\divin\Desktop\Group6F25\.venv\Scripts\python.exe"
+[INFO   ] Logger: Purge log fired. Processing...
+[INFO   ] Logger: Purge finished!
+[WARNING] stderr: Process Skeleton Generator Worker:
+[WARNING] stderr: Traceback (most recent call last):
+[WARNING] stderr:   File "C:\Users\divin\AppData\Local\Programs\Python\Python314\Lib\multiprocessing\process.py", line 320, in _bootstrap
+[WARNING] stderr:     self.run()
+[WARNING] stderr:     ~~~~~~~~^^
+[WARNING] stderr:   File "C:\Users\divin\AppData\Local\Programs\Python\Python314\Lib\multiprocessing\process.py", line 108, in run
+[WARNING] stderr:     self._target(*self._args, **self._kwargs)
+[WARNING] stderr:     ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[WARNING] stderr:   File "C:\Program Files\JetBrains\PyCharm 2025.2.4\plugins\python-ce\helpers\generator3\util_methods.py", line 873, in _multiprocessing_wrapper
+[WARNING] stderr:     data.result_conn.send(func(*args, **kwargs))
+[WARNING] stderr:                           ~~~~^^^^^^^^^^^^^^^^^
+[WARNING] stderr:   File "C:\Program Files\JetBrains\PyCharm 2025.2.4\plugins\python-ce\helpers\generator3\core.py", line 616, in generate_skeleton
+[WARNING] stderr:     __import__(name)  # sys.modules will fill up with what we want
+[WARNING] stderr:     ~~~~~~~~~~^^^^^^
+[WARNING] stderr:   File "kivy\\_metrics.pyx", line 1, in init kivy._metrics
+[WARNING] stderr:   File "kivy\\_event.pyx", line 1, in init kivy._event
+[WARNING] stderr:   File "kivy\\properties.pyx", line 283, in init kivy.properties
+[WARNING] stderr: ImportError: cannot import name dpi2px

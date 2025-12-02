@@ -1,0 +1,512 @@
+[
+    {
+        "total_distance_km": 6.91,
+        "avg_speed_kmh": 59.8,
+        "brake_events": 4,
+        "harsh_accel": 8,
+        "safety_score": 68,
+        "low_score_alert": false
+    },
+    {
+        "total_distance_km": 8.31,
+        "avg_speed_kmh": 62.5,
+        "brake_events": 16,
+        "harsh_accel": 13,
+        "safety_score": 29,
+        "low_score_alert": true
+    },
+    {
+        "total_distance_km": 25.17,
+        "avg_speed_kmh": 58.6,
+        "brake_events": 38,
+        "harsh_accel": 41,
+        "safety_score": 0,
+        "low_score_alert": true
+    },
+    {
+        "total_distance_km": 25.17,
+        "avg_speed_kmh": 58.6,
+        "brake_events": 38,
+        "harsh_accel": 41,
+        "safety_score": 0,
+        "low_score_alert": false
+    },
+    {
+        "total_distance_km": 4.8,
+        "avg_speed_kmh": 52.7,
+        "brake_events": 1,
+        "harsh_accel": 1,
+        "safety_score": 93,
+        "low_score_alert": false
+    },
+    {
+        "total_distance_km": 25.17,
+        "avg_speed_kmh": 58.6,
+        "brake_events": 38,
+        "harsh_accel": 41,
+        "safety_score": 0,
+        "low_score_alert": false
+    },
+    {
+        "total_distance_km": 1.93,
+        "avg_speed_kmh": 61.0,
+        "brake_events": 2,
+        "harsh_accel": 2,
+        "safety_score": 86,
+        "low_score_alert": false
+    },
+    {
+        "total_distance_km": 14.86,
+        "avg_speed_kmh": 56.1,
+        "brake_events": 19,
+        "harsh_accel": 23,
+        "safety_score": 0,
+        "low_score_alert": true
+    },
+    {
+        "total_distance_km": 10.47,
+        "avg_speed_kmh": 60.5,
+        "brake_events": 18,
+        "harsh_accel": 17,
+        "safety_score": 0,
+        "low_score_alert": true
+    },
+    {
+        "total_distance_km": 10.47,
+        "avg_speed_kmh": 60.5,
+        "brake_events": 18,
+        "harsh_accel": 17,
+        "safety_score": 0,
+        "low_score_alert": false
+    },
+    {
+        "total_distance_km": 10.47,
+        "avg_speed_kmh": 60.5,
+        "brake_events": 18,
+        "harsh_accel": 17,
+        "safety_score": 0,
+        "low_score_alert": false
+    },
+    {
+        "total_distance_km": 25.61,
+        "avg_speed_kmh": 56.7,
+        "brake_events": 36,
+        "harsh_accel": 34,
+        "safety_score": 0,
+        "low_score_alert": true
+    },
+    {
+        "total_distance_km": 4.33,
+        "avg_speed_kmh": 59.2,
+        "brake_events": 8,
+        "harsh_accel": 6,
+        "safety_score": 50,
+        "low_score_alert": false
+    },
+    {
+        "total_distance_km": 4.17,
+        "avg_speed_kmh": 62.4,
+        "brake_events": 7,
+        "harsh_accel": 9,
+        "safety_score": 45,
+        "low_score_alert": true
+    },
+    {
+        "total_distance_km": 2.18,
+        "avg_speed_kmh": 60.4,
+        "brake_events": 0,
+        "harsh_accel": 3,
+        "safety_score": 91,
+        "low_score_alert": false
+    },
+    {
+        "total_distance_km": 2.64,
+        "avg_speed_kmh": 61.2,
+        "brake_events": 3,
+        "harsh_accel": 4,
+        "safety_score": 76,
+        "low_score_alert": false
+    },
+    {
+        "total_distance_km": 7.6,
+        "avg_speed_kmh": 60.9,
+        "brake_events": 9,
+        "harsh_accel": 10,
+        "safety_score": 34,
+        "low_score_alert": true
+    },
+    {
+        "total_distance_km": 2.42,
+        "avg_speed_kmh": 59.2,
+        "brake_events": 3,
+        "harsh_accel": 3,
+        "safety_score": 79,
+        "low_score_alert": false
+    },
+    {
+        "total_distance_km": 7.01,
+        "avg_speed_kmh": 78.6,
+        "brake_events": 11,
+        "harsh_accel": 8,
+        "safety_score": 32,
+        "low_score_alert": true
+    },
+    {
+        "total_distance_km": 1.47,
+        "avg_speed_kmh": 70.0,
+        "brake_events": 3,
+        "harsh_accel": 3,
+        "safety_score": 79,
+        "low_score_alert": false
+    },
+    {
+        "total_distance_km": 3.01,
+        "avg_speed_kmh": 71.9,
+        "brake_events": 6,
+        "harsh_accel": 5,
+        "safety_score": 61,
+        "low_score_alert": false
+    },
+    {
+        "total_distance_km": 3.49,
+        "avg_speed_kmh": 64.6,
+        "brake_events": 7,
+        "harsh_accel": 8,
+        "safety_score": 48,
+        "low_score_alert": true
+    },
+    {
+        "total_distance_km": 2.26,
+        "avg_speed_kmh": 74.2,
+        "brake_events": 4,
+        "harsh_accel": 4,
+        "safety_score": 72,
+        "low_score_alert": false
+    },
+    {
+        "total_distance_km": 1.65,
+        "avg_speed_kmh": 70.8,
+        "brake_events": 3,
+        "harsh_accel": 2,
+        "safety_score": 82,
+        "low_score_alert": false
+    },
+    {
+        "total_distance_km": 2.09,
+        "avg_speed_kmh": 70.9,
+        "brake_events": 6,
+        "harsh_accel": 2,
+        "safety_score": 70,
+        "low_score_alert": false
+    },
+    {
+        "total_distance_km": 4.06,
+        "avg_speed_kmh": 68.8,
+        "brake_events": 3,
+        "harsh_accel": 3,
+        "safety_score": 79,
+        "low_score_alert": false
+    },
+    {
+        "total_distance_km": 6.26,
+        "avg_speed_kmh": 71.1,
+        "brake_events": 12,
+        "harsh_accel": 7,
+        "safety_score": 31,
+        "low_score_alert": true
+    },
+    {
+        "total_distance_km": 3.89,
+        "avg_speed_kmh": 76.6,
+        "brake_events": 5,
+        "harsh_accel": 9,
+        "safety_score": 53,
+        "low_score_alert": false
+    },
+    {
+        "total_distance_km": 4.49,
+        "avg_speed_kmh": 72.3,
+        "brake_events": 4,
+        "harsh_accel": 7,
+        "safety_score": 51,
+        "low_score_alert": false,
+        "alerts": {
+            "brakes": 4,
+            "harsh_accel": 7,
+            "speeding": 6
+        }
+    },
+    {
+        "total_distance_km": 3.35,
+        "avg_speed_kmh": 68.8,
+        "brake_events": 5,
+        "harsh_accel": 7,
+        "safety_score": 53,
+        "low_score_alert": false,
+        "alerts": {
+            "brakes": 5,
+            "harsh_accel": 7,
+            "speeding": 3
+        }
+    },
+    {
+        "total_distance_km": 4.71,
+        "avg_speed_kmh": 72.2,
+        "brake_events": 7,
+        "harsh_accel": 7,
+        "safety_score": 43,
+        "low_score_alert": true,
+        "alerts": {
+            "brakes": 7,
+            "harsh_accel": 7,
+            "speeding": 4
+        }
+    },
+    {
+        "total_distance_km": 6.01,
+        "avg_speed_kmh": 67.2,
+        "brake_events": 9,
+        "harsh_accel": 8,
+        "safety_score": 32,
+        "low_score_alert": true,
+        "alerts": {
+            "brakes": 9,
+            "harsh_accel": 8,
+            "speeding": 4
+        }
+    },
+    {
+        "total_distance_km": 2.07,
+        "avg_speed_kmh": 88.6,
+        "brake_events": 2,
+        "harsh_accel": 2,
+        "safety_score": 76,
+        "low_score_alert": false,
+        "alerts": {
+            "brakes": 2,
+            "harsh_accel": 2,
+            "speeding": 5
+        }
+    },
+    {
+        "total_distance_km": 3.33,
+        "avg_speed_kmh": 73.4,
+        "brake_events": 6,
+        "harsh_accel": 5,
+        "safety_score": 35,
+        "low_score_alert": true,
+        "alerts": {
+            "brakes": 6,
+            "harsh_accel": 5,
+            "speeding": 5
+        }
+    },
+    {
+        "total_distance_km": 0.0,
+        "avg_speed_kmh": 0.0,
+        "brake_events": 0,
+        "harsh_accel": 0,
+        "safety_score": 100,
+        "low_score_alert": false,
+        "alerts": {
+            "brakes": 0,
+            "harsh_accel": 0,
+            "speeding": 0
+        }
+    },
+    {
+        "total_distance_km": 4.8,
+        "avg_speed_kmh": 52.7,
+        "brake_events": 1,
+        "harsh_accel": 1,
+        "safety_score": 89,
+        "low_score_alert": false,
+        "alerts": {
+            "brakes": 1,
+            "harsh_accel": 1,
+            "speeding": 0
+        }
+    },
+    {
+        "total_distance_km": 0.0,
+        "avg_speed_kmh": 0.0,
+        "brake_events": 0,
+        "harsh_accel": 0,
+        "safety_score": 100,
+        "low_score_alert": false,
+        "alerts": {
+            "brakes": 0,
+            "harsh_accel": 0,
+            "speeding": 0
+        }
+    },
+    {
+        "total_distance_km": 0.0,
+        "avg_speed_kmh": 0.0,
+        "brake_events": 0,
+        "harsh_accel": 0,
+        "safety_score": 100,
+        "low_score_alert": false,
+        "alerts": {
+            "brakes": 0,
+            "harsh_accel": 0,
+            "speeding": 0
+        }
+    },
+    {
+        "total_distance_km": 0.0,
+        "avg_speed_kmh": 0.0,
+        "brake_events": 0,
+        "harsh_accel": 0,
+        "safety_score": 100,
+        "low_score_alert": false,
+        "alerts": {
+            "brakes": 0,
+            "harsh_accel": 0,
+            "speeding": 0
+        }
+    },
+    {
+        "total_distance_km": 1.03,
+        "avg_speed_kmh": 85.0,
+        "brake_events": 2,
+        "harsh_accel": 1,
+        "safety_score": 80,
+        "low_score_alert": false,
+        "alerts": {
+            "brakes": 2,
+            "harsh_accel": 1,
+            "speeding": 2
+        }
+    },
+    {
+        "total_distance_km": 1.03,
+        "avg_speed_kmh": 85.0,
+        "brake_events": 2,
+        "harsh_accel": 1,
+        "safety_score": 80,
+        "low_score_alert": false,
+        "alerts": {
+            "brakes": 2,
+            "harsh_accel": 1,
+            "speeding": 2
+        }
+    },
+    {
+        "total_distance_km": 4.8,
+        "avg_speed_kmh": 52.7,
+        "brake_events": 1,
+        "harsh_accel": 1,
+        "safety_score": 89,
+        "low_score_alert": false,
+        "alerts": {
+            "brakes": 1,
+            "harsh_accel": 1,
+            "speeding": 0
+        }
+    },
+    {
+        "total_distance_km": 0.0,
+        "avg_speed_kmh": 0.0,
+        "brake_events": 0,
+        "harsh_accel": 0,
+        "safety_score": 100,
+        "low_score_alert": false,
+        "alerts": {
+            "brakes": 0,
+            "harsh_accel": 0,
+            "speeding": 0
+        }
+    },
+    {
+        "total_distance_km": 2.29,
+        "avg_speed_kmh": 77.4,
+        "brake_events": 5,
+        "harsh_accel": 4,
+        "safety_score": 44,
+        "low_score_alert": true,
+        "alerts": {
+            "brakes": 5,
+            "harsh_accel": 4,
+            "speeding": 5
+        }
+    },
+    {
+        "total_distance_km": 1.72,
+        "avg_speed_kmh": 54.0,
+        "brake_events": 1,
+        "harsh_accel": 3,
+        "safety_score": 77,
+        "low_score_alert": false,
+        "alerts": {
+            "brakes": 1,
+            "harsh_accel": 3,
+            "speeding": 2
+        }
+    },
+    {
+        "total_distance_km": 5.23,
+        "avg_speed_kmh": 67.5,
+        "brake_events": 9,
+        "harsh_accel": 4,
+        "safety_score": 17,
+        "low_score_alert": true,
+        "alerts": {
+            "brakes": 9,
+            "harsh_accel": 4,
+            "speeding": 8
+        }
+    },
+    {
+        "total_distance_km": 5.23,
+        "avg_speed_kmh": 67.5,
+        "brake_events": 9,
+        "harsh_accel": 4,
+        "safety_score": 17,
+        "low_score_alert": false,
+        "alerts": {
+            "brakes": 9,
+            "harsh_accel": 4,
+            "speeding": 8
+        }
+    },
+    {
+        "total_distance_km": 5.23,
+        "avg_speed_kmh": 67.5,
+        "brake_events": 9,
+        "harsh_accel": 4,
+        "safety_score": 17,
+        "low_score_alert": false,
+        "alerts": {
+            "brakes": 9,
+            "harsh_accel": 4,
+            "speeding": 8
+        }
+    },
+    {
+        "total_distance_km": 5.23,
+        "avg_speed_kmh": 67.5,
+        "brake_events": 9,
+        "harsh_accel": 4,
+        "safety_score": 17,
+        "low_score_alert": false,
+        "alerts": {
+            "brakes": 9,
+            "harsh_accel": 4,
+            "speeding": 8
+        }
+    },
+    {
+        "total_distance_km": 4.92,
+        "avg_speed_kmh": 72.8,
+        "brake_events": 5,
+        "harsh_accel": 3,
+        "safety_score": 48,
+        "low_score_alert": true,
+        "alerts": {
+            "brakes": 5,
+            "harsh_accel": 3,
+            "speeding": 5
+        }
+    }
+]
