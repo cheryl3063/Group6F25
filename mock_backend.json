@@ -1,83 +1,18 @@
 {
     "user123": [
         {
-            "trip_id": "ba739403-a527-4466-af51-0dde8b9ad5e5",
-            "timestamp": "2025-11-27 21:40:07",
-            "samples": [],
-            "summary": {
-                "score": 81,
-                "avg_speed": 52.9,
-                "distance_km": 2.43,
-                "brake_events": 4,
-                "harsh_accel": 1
-            }
+            "score": 83,
+            "avg_speed": 64.0,
+            "distance_km": 1.57,
+            "brake_events": 2,
+            "harsh_accel": 3
         },
         {
-            "trip_id": "a7091786-41b7-498e-a3f8-bc0e5b4e0610",
-            "timestamp": "2025-11-27 21:40:07",
-            "samples": [
-                {
-                    "speed": 46,
-                    "brake_events": 0,
-                    "harsh_accel": 0,
-                    "distance_km": 0.19
-                },
-                {
-                    "speed": 38,
-                    "brake_events": 0,
-                    "harsh_accel": 1,
-                    "distance_km": 0.23
-                },
-                {
-                    "speed": 39,
-                    "brake_events": 0,
-                    "harsh_accel": 0,
-                    "distance_km": 0.37
-                },
-                {
-                    "speed": 86,
-                    "brake_events": 1,
-                    "harsh_accel": 0,
-                    "distance_km": 0.26
-                },
-                {
-                    "speed": 89,
-                    "brake_events": 1,
-                    "harsh_accel": 0,
-                    "distance_km": 0.34
-                },
-                {
-                    "speed": 34,
-                    "brake_events": 1,
-                    "harsh_accel": 0,
-                    "distance_km": 0.36
-                },
-                {
-                    "speed": 38,
-                    "brake_events": 1,
-                    "harsh_accel": 0,
-                    "distance_km": 0.2
-                },
-                {
-                    "speed": 53,
-                    "brake_events": 0,
-                    "harsh_accel": 0,
-                    "distance_km": 0.32
-                },
-                {
-                    "speed": 53,
-                    "brake_events": 0,
-                    "harsh_accel": 0,
-                    "distance_km": 0.16
-                }
-            ],
-            "summary": {
-                "total_distance_km": 2.43,
-                "avg_speed_kmh": 52.9,
-                "brake_events": 4,
-                "harsh_accel": 1,
-                "safety_score": 81
-            }
+            "score": 83,
+            "avg_speed": 54.9,
+            "distance_km": 2.25,
+            "brake_events": 2,
+            "harsh_accel": 3
         }
     ]
 }
