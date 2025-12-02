@@ -1,3 +1,5 @@
+import json
+import os
 from kivy.uix.screenmanager import Screen
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.scrollview import ScrollView
@@ -82,9 +84,6 @@ class TripHistoryScreen(Screen):
             self.history_box.add_widget(Label(text="No trips yet."))
             return
 
-        # ----------------------------
-        # FIX: Filter out invalid trips
-        # ----------------------------
         valid_trips = []
         for t in trips:
             if "timestamp" not in t or "summary" not in t:
@@ -96,7 +95,6 @@ class TripHistoryScreen(Screen):
             self.history_box.add_widget(Label(text="No valid trips found."))
             return
 
-        # Apply filter (today/week/all)
         trips = [t for t in valid_trips if self.passes_filter(t)]
 
         if not trips:
@@ -119,10 +117,12 @@ class TripHistoryScreen(Screen):
                 valign="middle",
             )
 
-            btn.bind(on_press=lambda _, t=trip: self.open_summary(t["summary"]))
+            btn.bind(on_press=lambda _, t=trip: self.open_summary(t))
             self.history_box.add_widget(btn)
 
-    def open_summary(self, summary):
+    def open_summary(self, trip):
+        summary = trip["summary"].copy()
+        summary["timestamp"] = trip["timestamp"]
         screen = self.manager.get_screen("trip_summary")
         screen.set_summary(summary)
         self.manager.current = "trip_summary"

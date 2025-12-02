@@ -16,7 +16,7 @@ class AnalyticsScreen(Screen):
 
         root = BoxLayout(orientation="vertical", padding=dp(16), spacing=dp(12))
 
-        root.add_widget(Label(text="📊 Analytics", font_size=22, bold=True))
+        root.add_widget(Label(text="📊 Analytics", font_size=26, bold=True))
 
         self.stats_label = Label(text="Loading...", font_size=18)
         root.add_widget(self.stats_label)

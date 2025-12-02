@@ -90,13 +90,18 @@ class TripRecordingScreen(Screen):
             for s in self.samples
         ]
 
-        summary = self.trip_manager.end_trip_and_save(formatted_samples)
+        # Save via TripManager (local file)
+        trip_entry = self.trip_manager.end_trip_and_save(formatted_samples)
+        summary = trip_entry["summary"]
+        summary["timestamp"] = trip_entry["timestamp"]
 
         print("\n=== SUMMARY (via TripManager) ===")
         print(summary)
 
+        # Send to Flask backend (same format)
         self.send_to_backend(formatted_samples, summary)
 
+        # Navigate to summary screen (Trip Flow C start)
         summary_screen = self.manager.get_screen("trip_summary")
         summary_screen.set_summary(summary)
         self.manager.current = "trip_summary"
@@ -112,6 +117,7 @@ class TripRecordingScreen(Screen):
             print("❌ Backend error:", e)
 
     def update_telemetry(self):
+        import random
         while self.running:
             ax, ay, az = [round(random.uniform(-9.8, 9.8), 2) for _ in range(3)]
             gx, gy, gz = [round(random.uniform(-3.14, 3.14), 2) for _ in range(3)]

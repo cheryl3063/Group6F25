@@ -1,0 +1,30 @@
+[
+    {
+        "date": "Sat",
+        "avg_score": 78
+    },
+    {
+        "date": "Sun",
+        "avg_score": 82
+    },
+    {
+        "date": "Mon",
+        "avg_score": 80
+    },
+    {
+        "date": "Tue",
+        "avg_score": 85
+    },
+    {
+        "date": "Wed",
+        "avg_score": 88
+    },
+    {
+        "date": "Thu",
+        "avg_score": 90
+    },
+    {
+        "date": "Fri",
+        "avg_score": 84
+    }
+]

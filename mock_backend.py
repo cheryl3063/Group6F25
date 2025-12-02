@@ -1,50 +1,50 @@
 import json
 import os
-import uuid
-from datetime import datetime
 
-BACKEND_FILE = "mock_backend.json"
+SAVE_FILE = "latest_trip.json"
 
 
-def save_score(user_id, summary_data):
+def load_weekly_history():
+    """Static weekly performance trend for InsightsScreen."""
+    return [
+        {"day": "Mon", "score": 82},
+        {"day": "Tue", "score": 90},
+        {"day": "Wed", "score": 85},
+        {"day": "Thu", "score": 88},
+        {"day": "Fri", "score": 92},
+        {"day": "Sat", "score": 80},
+        {"day": "Sun", "score": 78},
+    ]
+
+
+def save_latest_trip(summary):
     """
-    summary_data is expected to contain:
+    Save last summary for ScoreScreen.
+    summary is expected to be:
     {
-        "score": 85,
-        "avg_speed": 67,
-        "distance_km": 12.4,
-        "brake_events": 3,
-        "harsh_accel": 1
+        "total_distance_km": ...,
+        "avg_speed_kmh": ...,
+        "brake_events": ...,
+        "harsh_accel": ...,
+        "safety_score": ...
+        (optional) "timestamp": ...
     }
     """
+    try:
+        with open(SAVE_FILE, "w") as f:
+            json.dump(summary, f, indent=2)
+        return True
+    except Exception as exc:
+        print(f"[mock_backend] Failed to save trip: {exc}")
+        return False
 
-    # Load existing file or create new
-    if os.path.exists(BACKEND_FILE):
-        with open(BACKEND_FILE, "r") as f:
-            try:
-                db = json.load(f)
-            except:
-                db = {}
-    else:
-        db = {}
 
-    # Ensure user key exists
-    if user_id not in db:
-        db[user_id] = []
-
-    # Create a proper trip entry (matching TripManager format)
-    trip_entry = {
-        "trip_id": str(uuid.uuid4()),
-        "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-        "samples": [],     # mock backend does not store samples
-        "summary": summary_data
-    }
-
-    # Save entry
-    db[user_id].append(trip_entry)
-
-    # Write back to JSON file
-    with open(BACKEND_FILE, "w") as f:
-        json.dump(db, f, indent=4)
-
-    print(f"[MOCK BACKEND] Saved new-format trip for user {user_id}: {trip_entry}")
+def load_latest_trip():
+    if not os.path.exists(SAVE_FILE):
+        return None
+    try:
+        with open(SAVE_FILE, "r") as f:
+            return json.load(f)
+    except Exception as exc:
+        print(f"[mock_backend] Failed to load saved trip: {exc}")
+        return None

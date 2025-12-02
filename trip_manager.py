@@ -10,6 +10,7 @@ class TripManager:
     def __init__(self, user_id="user123"):
         self.user_id = user_id
 
+    # ---------------------------------------------------------
     def _load_backend(self):
         if not os.path.exists(BACKEND_FILE):
             print("⚠ No backend file found → starting fresh.")
@@ -23,6 +24,7 @@ class TripManager:
             print("ERROR reading backend:", e)
             return {}
 
+    # ---------------------------------------------------------
     def _save_backend(self, data):
         try:
             with open(BACKEND_FILE, "w") as f:
@@ -30,11 +32,12 @@ class TripManager:
         except Exception as e:
             print("ERROR writing backend:", e)
 
+    # ---------------------------------------------------------
     def _compute_summary(self, samples):
         if not samples:
             return {
-                "total_distance_km": 0,
-                "avg_speed_kmh": 0,
+                "total_distance_km": 0.0,
+                "avg_speed_kmh": 0.0,
                 "brake_events": 0,
                 "harsh_accel": 0,
                 "safety_score": 0
@@ -55,10 +58,16 @@ class TripManager:
             "safety_score": score
         }
 
+    # ---------------------------------------------------------
     def end_trip_and_save(self, samples):
         """
-        Local version of saving a trip (same format as backend).
-        Useful for demos or offline.
+        Save a trip and return the full trip entry:
+        {
+            "trip_id": ...,
+            "timestamp": ...,
+            "samples": [...],
+            "summary": {...}
+        }
         """
         backend = self._load_backend()
 
@@ -78,8 +87,9 @@ class TripManager:
         self._save_backend(backend)
 
         print(f"[TripManager] Saved trip for {self.user_id}")
-        return summary
+        return trip_entry
 
+    # ---------------------------------------------------------
     def get_all_trips(self):
         backend = self._load_backend()
         return backend.get(self.user_id, [])

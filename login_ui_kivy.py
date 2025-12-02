@@ -1,49 +1,161 @@
+# login_ui_kivy.py
 # -*- coding: utf-8 -*-
 import requests
 from kivy.app import App
 from kivy.uix.label import Label
 from kivy.uix.boxlayout import BoxLayout
+from kivy.uix.floatlayout import FloatLayout
 from kivy.uix.textinput import TextInput
 from kivy.uix.button import Button
+from kivy.metrics import dp
+from kivy.graphics import Color, RoundedRectangle
 from kivy.uix.popup import Popup
 from kivy.uix.screenmanager import ScreenManager, Screen, FadeTransition
+from kivy.animation import Animation
 
-# Import other project modules (main is imported but not directly used)
-import main  # safe to keep if other parts rely on it
 from analytics_screen import AnalyticsScreen
 from trip_screen import TripRecordingScreen
 from trip_summary_screen import TripSummaryScreen
 from trip_history_screen import TripHistoryScreen
-from sensors_listeners import SensorListener
-from trip_summary_utils import compute_summary  # still available if needed
+from score_screen import ScoreScreen
+from insights_screen import InsightsScreen
 
 API_URL = "http://127.0.0.1:5050/login"
 
 
-# -------------------------------------------------------------------
-# LOGIN SCREEN
-# -------------------------------------------------------------------
+# =====================================================================
+#                    TOP MENU MIXIN (Hamburger Menu)
+# =====================================================================
+class TopMenuMixin:
+    def build_top_menu(self, layout):
+        parent = FloatLayout()
+        parent.add_widget(layout)
+
+        self.menu_btn = Button(
+            text="☰",
+            size_hint=(None, None),
+            size=(dp(50), dp(50)),
+            pos_hint={"right": 0.98, "top": 0.98},
+            background_color=(0.2, 0.2, 0.2, 1),
+            color=(1, 1, 1, 1),
+            font_size=28,
+        )
+        self.menu_btn.bind(on_press=self.toggle_menu)
+        parent.add_widget(self.menu_btn)
+
+        self.menu_panel = BoxLayout(
+            orientation='vertical',
+            size_hint=(1, None),
+            height=0,
+            pos_hint={"top": 1},
+            padding=dp(12),
+            spacing=dp(10),
+        )
+
+        with self.menu_panel.canvas.before:
+            Color(0.08, 0.08, 0.08, 0.97)
+            self.menu_bg = RoundedRectangle(radius=[0])
+
+        def update_bg(*_):
+            self.menu_bg.pos = self.menu_panel.pos
+            self.menu_bg.size = self.menu_panel.size
+
+        self.menu_panel.bind(pos=update_bg, size=update_bg)
+
+        def menu_btn(text, target):
+            b = Button(
+                text=text,
+                size_hint_y=None,
+                height=dp(52),
+                background_color=(0.18, 0.18, 0.18, 1),
+                color=(1, 1, 1, 1),
+                font_size=18
+            )
+            b.bind(on_press=lambda *_: self.goto(target))
+            return b
+
+        self.menu_panel.add_widget(menu_btn("🏠 Dashboard", "dashboard"))
+        self.menu_panel.add_widget(menu_btn("🚗 Trip Recording", "trip"))
+        self.menu_panel.add_widget(menu_btn("📊 Analytics", "analytics"))
+        self.menu_panel.add_widget(menu_btn("📈 Insights & Trends", "insights"))
+        self.menu_panel.add_widget(menu_btn("📄 Trip Summary", "trip_summary"))
+        self.menu_panel.add_widget(menu_btn("⭐ Score", "score"))
+        self.menu_panel.add_widget(menu_btn("📚 History", "history"))
+        self.menu_panel.add_widget(menu_btn("🔒 Logout", "login"))
+
+        parent.add_widget(self.menu_panel)
+        return parent
+
+    def toggle_menu(self, *_):
+        if self.menu_panel.height == 0:
+            Animation(height=dp(340), d=0.25).start(self.menu_panel)
+        else:
+            Animation(height=0, d=0.25).start(self.menu_panel)
+
+    def goto(self, screen_name):
+        self.manager.current = screen_name
+        Animation(height=0, d=0.2).start(self.menu_panel)
+
+
+# =====================================================================
+#                         LOGIN SCREEN
+# =====================================================================
 class LoginScreen(Screen):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        layout = BoxLayout(orientation='vertical', padding=25, spacing=15)
 
-        layout.add_widget(Label(text="Driver Analytics", font_size=28, bold=True))
-        layout.add_widget(Label(text="Login to continue", font_size=18))
+        root = BoxLayout(orientation='vertical', padding=dp(32), spacing=dp(20))
 
-        self.email_input = TextInput(hint_text="Email", multiline=False,
-                                     size_hint_y=None, height=40)
-        self.password_input = TextInput(hint_text="Password", password=True,
-                                        multiline=False, size_hint_y=None, height=40)
+        root.add_widget(Label(
+            text="🚗 Driver Analytics",
+            font_size=32,
+            bold=True,
+            size_hint_y=None,
+            height=dp(48)
+        ))
+        root.add_widget(Label(
+            text="Sign in to continue",
+            font_size=18,
+            size_hint_y=None,
+            height=dp(30)
+        ))
 
-        login_btn = Button(text="Login", size_hint_y=None, height=45)
+        self.email_input = TextInput(
+            hint_text="Email Address",
+            multiline=False,
+            height=dp(40),
+            size_hint_y=None,
+            font_size=20,
+            background_color=(0.15, 0.15, 0.15, 1),
+            foreground_color=(1, 1, 1, 1)
+        )
+
+        self.password_input = TextInput(
+            hint_text="Password",
+            multiline=False,
+            height=dp(40),
+            size_hint_y=None,
+            password=True,
+            font_size=20,
+            background_color=(0.15, 0.15, 0.15, 1),
+            foreground_color=(1, 1, 1, 1)
+        )
+
+        root.add_widget(self.email_input)
+        root.add_widget(self.password_input)
+
+        login_btn = Button(
+            text="Sign In",
+            height=dp(52),
+            size_hint_y=None,
+            font_size=18,
+            background_color=(0.1, 0.5, 1, 1),
+            color=(1, 1, 1, 1)
+        )
         login_btn.bind(on_press=self.handle_login)
+        root.add_widget(login_btn)
 
-        layout.add_widget(self.email_input)
-        layout.add_widget(self.password_input)
-        layout.add_widget(login_btn)
-
-        self.add_widget(layout)
+        self.add_widget(root)
 
     def handle_login(self, instance):
         email = self.email_input.text.strip()
@@ -53,7 +165,6 @@ class LoginScreen(Screen):
             self.show_popup("Error", "Please enter both email and password.")
             return
 
-        # Gmail validation
         if not email.endswith("@gmail.com"):
             self.show_popup("Error", "Please enter a valid Gmail address ending with '@gmail.com'.")
             return
@@ -80,141 +191,125 @@ class LoginScreen(Screen):
     def show_popup(self, title, message):
         Popup(
             title=title,
-            content=Label(text=message, font_size=16),
+            content=Label(text=message),
             size_hint=(0.75, 0.35)
         ).open()
 
 
-# -------------------------------------------------------------------
-# DASHBOARD SCREEN
-# -------------------------------------------------------------------
+# =====================================================================
+#                         DASHBOARD SCREEN
+# =====================================================================
 class DashboardScreen(Screen):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.layout = BoxLayout(orientation='vertical', padding=25, spacing=20)
-        self.label = Label(text="Welcome!", font_size=24)
-        self.layout.add_widget(self.label)
 
-        # Trip Summary Button (demo)
-        btn_summary = Button(text="🧾 Generate Trip Summary (Demo)", size_hint_y=None, height=45)
-        btn_summary.bind(on_press=self.open_trip_summary)
-        self.layout.add_widget(btn_summary)
+        root = BoxLayout(
+            orientation="vertical",
+            padding=dp(24),
+            spacing=dp(20)
+        )
 
-        # Start Trip Button
-        btn_trip = Button(text="🚗 Start Trip Recording", size_hint_y=None, height=45)
-        btn_trip.bind(on_press=lambda x: self.open_trip())
-        self.layout.add_widget(btn_trip)
+        self.label = Label(
+            text="🏠 Dashboard",
+            font_size=32,
+            bold=True,
+            size_hint_y=None,
+            height=dp(50)
+        )
+        root.add_widget(self.label)
 
-        # Analytics Button
-        btn_analytics = Button(text="📊 View Analytics", size_hint_y=None, height=45)
-        btn_analytics.bind(on_press=self.open_analytics)
-        self.layout.add_widget(btn_analytics)
+        card = BoxLayout(
+            orientation="vertical",
+            spacing=dp(18),
+            padding=dp(20),
+            size_hint=(1, None),
+            height=dp(420),
+        )
 
-        # Logout Button
-        btn_logout = Button(text="🔒 Logout", size_hint_y=None, height=45)
-        btn_logout.bind(on_press=self.logout)
-        self.layout.add_widget(btn_logout)
+        with card.canvas.before:
+            Color(0.12, 0.12, 0.12, 0.9)
+            self.card_bg = RoundedRectangle(radius=[20])
 
-        self.add_widget(self.layout)
+        def update_bg(*_):
+            self.card_bg.pos = card.pos
+            self.card_bg.size = card.size
+
+        card.bind(pos=update_bg, size=update_bg)
+
+        def make_btn(text, icon, target):
+            btn = Button(
+                text=f"{icon}  {text}",
+                font_size=20,
+                height=dp(46),
+                size_hint_y=None,
+                background_color=(0.18, 0.18, 0.18, 1),
+                color=(1, 1, 1, 1)
+            )
+            btn.bind(on_press=lambda *_: setattr(self.manager, "current", target))
+            return btn
+
+        card.add_widget(make_btn("Start Trip Recording", "🚗", "trip"))
+        card.add_widget(make_btn("View Analytics", "📊", "analytics"))
+        card.add_widget(make_btn("Insights & Trends", "📈", "insights"))
+        card.add_widget(make_btn("Trip History", "📚", "history"))
+        card.add_widget(make_btn("Driver Score", "⭐", "score"))
+
+        logout_btn = Button(
+            text="🔒  Logout",
+            font_size=20,
+            height=dp(56),
+            size_hint_y=None,
+            background_color=(0.30, 0.12, 0.12, 1),
+            color=(1, 1, 1, 1)
+        )
+        logout_btn.bind(on_press=lambda *_: setattr(self.manager, "current", "login"))
+        card.add_widget(logout_btn)
+
+        root.add_widget(card)
+        self.add_widget(root)
 
     def set_user(self, email, uid):
-        self.label.text = f"👋 Welcome, {email}!\nUser ID: {uid}"
-
-    def open_trip(self):
-        self.manager.transition.direction = "left"
-        self.manager.current = "trip"
-
-    def open_analytics(self, instance):
-        self.manager.transition.direction = "left"
-        self.manager.current = "analytics"
-
-    def logout(self, instance):
-        self.manager.transition.direction = "right"
-        self.manager.current = "login"
-
-    def open_trip_summary(self, *_):
-        """
-        Demo: create a fake trip, let TripManager compute + save summary,
-        then show it on the TripSummaryScreen.
-        """
-        from trip_manager import TripManager
-
-        samples = [
-            {"speed": 42.0, "brake_events": 0, "harsh_accel": 0, "distance_km": 1.2},
-            {"speed": 55.0, "brake_events": 1, "harsh_accel": 0, "distance_km": 2.0},
-            {"speed": 61.0, "brake_events": 0, "harsh_accel": 1, "distance_km": 1.6},
-        ]
-
-        tm = TripManager("user123")
-        summary = tm.end_trip_and_save(samples)
-
-        ts = self.manager.get_screen("trip_summary")
-        ts.set_summary(summary)
-
-        self.manager.transition.direction = "left"
-        self.manager.current = "trip_summary"
+        self.label.text = f"🏠 Dashboard\n👋 {email} (ID: {uid})"
 
 
-# -------------------------------------------------------------------
-# MAIN APP CONTROLLER
-# -------------------------------------------------------------------
+# =====================================================================
+#                        MAIN APP
+# =====================================================================
 class DriverApp(App):
-
     def build(self):
-        self.sensor_listener = SensorListener()
-        self.user_id = "user123"
+        sm = ScreenManager(transition=FadeTransition(duration=0.35))
 
-        sm = ScreenManager(transition=FadeTransition())
         sm.add_widget(LoginScreen(name="login"))
         sm.add_widget(DashboardScreen(name="dashboard"))
-        sm.add_widget(AnalyticsScreen(name="analytics"))
-        sm.add_widget(TripHistoryScreen(name="history"))      # ✅ history screen
+
+        # Hybrid: trip + summary + history without menu
+        sm.add_widget(TripRecordingScreen(name="trip"))
         sm.add_widget(TripSummaryScreen(name="trip_summary"))
-        sm.add_widget(TripRecordingScreen(name="trip"))       # Live telemetry
+        sm.add_widget(TripHistoryScreen(name="history"))
+
+        # Analytics / score / insights with hamburger menu
+        sm.add_widget(self.wrap_with_menu(AnalyticsScreen(name="analytics")))
+        sm.add_widget(self.wrap_with_menu(ScoreScreen(name="score")))
+        sm.add_widget(self.wrap_with_menu(InsightsScreen(name="insights")))
 
         return sm
 
-    # Optional hooks if you later wire TripRecordingScreen to call these
-    def start_trip_recording(self):
-        print("DriverApp → Starting sensors...")
-        try:
-            self.sensor_listener.start_listeners()
-        except Exception as e:
-            print(f"[Sensors] Error starting listeners: {e}")
+    def wrap_with_menu(self, screen):
+        original_class = screen.__class__
 
-    def stop_trip_recording(self):
-        print("DriverApp → Stopping sensors...")
-        try:
-            self.sensor_listener.stop_listeners()
-        except Exception as e:
-            print(f"[Sensors] Error stopping listeners: {e}")
+        screen.__class__ = type(
+            original_class.__name__,
+            (TopMenuMixin, original_class),
+            {}
+        )
 
-    # -----------------------------------------------------
-    # Called from TripRecordingScreen when a trip ends
-    # -----------------------------------------------------
-    def receive_trip_summary(self, samples):
-        """
-        Called from TripRecordingScreen._stop_clicked()
-        after a trip finishes (if you choose to use it).
-        """
-        print("\n=== App Received Raw Samples (from TripRecordingScreen) ===")
-        print(samples)
-        print("===========================================================\n")
+        original_layout = screen.children[0]
+        screen.remove_widget(original_layout)
 
-        # Compute + save summary via TripManager
-        from trip_manager import TripManager
-        tm = TripManager(self.user_id)
-        summary = tm.end_trip_and_save(samples)
+        wrapped = screen.build_top_menu(original_layout)
+        screen.add_widget(wrapped)
 
-        print("\n=== FINAL SUMMARY (DriverApp) ===")
-        print(summary)
-        print("=================================\n")
-
-        ts = self.root.get_screen("trip_summary")
-        ts.set_summary(summary)
-
-        self.root.transition.direction = "left"
-        self.root.current = "trip_summary"
+        return screen
 
 
 if __name__ == "__main__":
