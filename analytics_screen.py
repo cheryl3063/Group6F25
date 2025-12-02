@@ -16,6 +16,9 @@ from mock_backend import BACKEND_FILE
 
 Window.clearcolor = (0, 0, 0, 1)
 
+#-----#
+self.manager.current = "history"
+#---#
 
 class AnalyticsScreen(Screen):
     def __init__(self, **kwargs):
