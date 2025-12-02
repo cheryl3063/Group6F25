@@ -6,14 +6,12 @@ import json
 import os
 import requests
 
-from kivy.app import App
 from kivy.clock import Clock
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.button import Button
 from kivy.uix.label import Label
 from kivy.uix.screenmanager import Screen
 
-# NEW: import TripManager
 from trip_manager import TripManager
 
 
@@ -23,7 +21,7 @@ class TripRecordingScreen(Screen):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
-        self.trip_manager = TripManager(user_id="user123")   # NEW
+        self.trip_manager = TripManager(user_id="user123")
 
         self.layout = BoxLayout(orientation="vertical", padding=25, spacing=15)
 
@@ -65,11 +63,9 @@ class TripRecordingScreen(Screen):
 
         Clock.schedule_interval(self.auto_save, 5)
 
-    # -------------------------------
     def _start_clicked(self, *_):
         if self.running:
             return
-
         self.running = True
         self.samples = []
         self.start_btn.text = "🔵 Recording…"
@@ -77,7 +73,6 @@ class TripRecordingScreen(Screen):
         self._thread = Thread(target=self.update_telemetry, daemon=True)
         self._thread.start()
 
-    # -------------------------------
     def _stop_clicked(self, *_):
         self.running = False
         self.start_btn.text = "▶️ Start Trip"
@@ -85,7 +80,6 @@ class TripRecordingScreen(Screen):
         if os.path.exists("autosave.json"):
             os.remove("autosave.json")
 
-        # Convert raw samples into the format TripManager expects
         formatted_samples = [
             {
                 "speed": s["speed"],
@@ -96,26 +90,19 @@ class TripRecordingScreen(Screen):
             for s in self.samples
         ]
 
-        # NEW: Use TripManager to compute summary + save backend
         summary = self.trip_manager.end_trip_and_save(formatted_samples)
 
         print("\n=== SUMMARY (via TripManager) ===")
         print(summary)
 
-        # Send to backend for your external server (unchanged)
         self.send_to_backend(formatted_samples, summary)
 
-        # Navigate to summary screen
         summary_screen = self.manager.get_screen("trip_summary")
-        summary_screen.set_summary(summary)   # NEW
+        summary_screen.set_summary(summary)
         self.manager.current = "trip_summary"
 
-    # -------------------------------
     def send_to_backend(self, samples, summary):
-        payload = {
-            "samples": samples,
-            "summary": summary
-        }
+        payload = {"samples": samples, "summary": summary}
 
         try:
             print("📡 Sending trip to backend...")
@@ -124,7 +111,6 @@ class TripRecordingScreen(Screen):
         except Exception as e:
             print("❌ Backend error:", e)
 
-    # -------------------------------
     def update_telemetry(self):
         while self.running:
             ax, ay, az = [round(random.uniform(-9.8, 9.8), 2) for _ in range(3)]
@@ -147,13 +133,11 @@ class TripRecordingScreen(Screen):
 
             time.sleep(1)
 
-    # -------------------------------
     def refresh_labels(self, ax, ay, az, gx, gy, gz, lat, lon):
         self.accel_label.text = f"🪶 Accelerometer → X={ax}, Y={ay}, Z={az}"
         self.gyro_label.text = f"⚙️ Gyroscope → X={gx}, Y={gy}, Z={gz}"
         self.gps_label.text = f"🛰 GPS → Lat={lat}, Lon={lon}"
 
-    # -------------------------------
     def auto_save(self, *args):
         if not self.running:
             return

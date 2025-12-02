@@ -1,28 +1,29 @@
 from permissions_manager import PermissionManager
 from sensors_listeners import SensorListener
+from data_buffer import DataBuffer
+from trip_summary_utils import compute_summary
 
 from kivy.app import App
 from kivy.uix.screenmanager import ScreenManager
 
-# Screens
 from trip_screen import TripRecordingScreen
 from analytics_screen import AnalyticsScreen
 from trip_summary_screen import TripSummaryScreen
+from trip_history_screen import TripHistoryScreen
 
-# Scoring + backend
-from trip_summary_utils import compute_summary
 from mock_backend import save_score
 import requests
 
 
 class DriverApp(App):
     """
-    Main controller for the Kivy application.
-    Must include receive_trip_summary() for TripRecordingScreen.
+    Standalone version of the app without login UI.
     """
+
     def build(self):
         self.pm = PermissionManager()
         self.sensors = SensorListener()
+        self.buffer = DataBuffer()
         self.is_trip_running = False
         self.user_id = "user123"
 
@@ -30,6 +31,7 @@ class DriverApp(App):
         self.sm.add_widget(TripRecordingScreen(name="trip"))
         self.sm.add_widget(TripSummaryScreen(name="trip_summary"))
         self.sm.add_widget(AnalyticsScreen(name="analytics"))
+        self.sm.add_widget(TripHistoryScreen(name="history"))
         return self.sm
 
     def on_start(self):
@@ -38,16 +40,13 @@ class DriverApp(App):
         if not self.pm.validate_permissions():
             print("❌ Permissions missing — some features may not work.")
 
-    # ------------------------------------------------------------
-    # TRIP CONTROL
-    # ------------------------------------------------------------
     def start_trip_recording(self):
         if self.is_trip_running:
             return
         print("🚗 Trip recording started")
 
         try:
-            self.sensors.start_listeners()
+            self.sensors.start_listeners(self.buffer)
         except Exception as e:
             print(f"[Sensors] Error starting listeners: {e}")
 
@@ -56,6 +55,7 @@ class DriverApp(App):
     def stop_trip_recording(self):
         if not self.is_trip_running:
             return
+
         print("🛑 Trip recording stopped")
 
         try:
@@ -65,34 +65,32 @@ class DriverApp(App):
         except Exception as e:
             print(f"[Sensors] stop_listeners error: {e}")
 
+        samples = self.buffer.load_file()
+        summary = compute_summary(samples)
+
+        summary_screen = self.sm.get_screen("trip_summary")
+        summary_screen.set_summary(summary)
+        self.sm.current = "trip_summary"
+
         self.is_trip_running = False
 
-    # ------------------------------------------------------------
-    # REQUIRED BY trip_screen.py
-    # THIS IS THE FUNCTION KIVY WAS CRASHING ABOUT
-    # ------------------------------------------------------------
     def receive_trip_summary(self, samples):
         print("\n=== App Received Raw Samples ===")
         print(samples)
         print("================================\n")
 
-        # Compute summary
         summary = compute_summary(samples)
+
         print("\n=== FINAL SUMMARY ===")
         print(summary)
         print("======================\n")
 
-        # Send to backend
         self._send_to_backend(summary)
 
-        # Show summary screen
         summary_screen = self.sm.get_screen("trip_summary")
-        summary_screen.set_samples(samples)
+        summary_screen.set_summary(summary)
         self.sm.current = "trip_summary"
 
-    # ------------------------------------------------------------
-    # BACKEND SAVE
-    # ------------------------------------------------------------
     def _send_to_backend(self, summary):
         url = "http://127.0.0.1:5050/save_trip"
 

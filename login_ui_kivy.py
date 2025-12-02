@@ -1,6 +1,4 @@
 # -*- coding: utf-8 -*-
-import io
-import sys
 import requests
 from kivy.app import App
 from kivy.uix.label import Label
@@ -10,13 +8,14 @@ from kivy.uix.button import Button
 from kivy.uix.popup import Popup
 from kivy.uix.screenmanager import ScreenManager, Screen, FadeTransition
 
-# Import other project modules
-import main  # (not strictly used but safe to keep if other parts rely on it)
+# Import other project modules (main is imported but not directly used)
+import main  # safe to keep if other parts rely on it
 from analytics_screen import AnalyticsScreen
 from trip_screen import TripRecordingScreen
 from trip_summary_screen import TripSummaryScreen
+from trip_history_screen import TripHistoryScreen
 from sensors_listeners import SensorListener
-from trip_summary_utils import compute_summary  # ✅ used in receive_trip_summary
+from trip_summary_utils import compute_summary  # still available if needed
 
 API_URL = "http://127.0.0.1:5050/login"
 
@@ -32,8 +31,10 @@ class LoginScreen(Screen):
         layout.add_widget(Label(text="Driver Analytics", font_size=28, bold=True))
         layout.add_widget(Label(text="Login to continue", font_size=18))
 
-        self.email_input = TextInput(hint_text="Email", multiline=False, size_hint_y=None, height=40)
-        self.password_input = TextInput(hint_text="Password", password=True, multiline=False, size_hint_y=None, height=40)
+        self.email_input = TextInput(hint_text="Email", multiline=False,
+                                     size_hint_y=None, height=40)
+        self.password_input = TextInput(hint_text="Password", password=True,
+                                        multiline=False, size_hint_y=None, height=40)
 
         login_btn = Button(text="Login", size_hint_y=None, height=45)
         login_btn.bind(on_press=self.handle_login)
@@ -95,7 +96,7 @@ class DashboardScreen(Screen):
         self.layout.add_widget(self.label)
 
         # Trip Summary Button (demo)
-        btn_summary = Button(text="🧾 Generate Trip Summary", size_hint_y=None, height=45)
+        btn_summary = Button(text="🧾 Generate Trip Summary (Demo)", size_hint_y=None, height=45)
         btn_summary.bind(on_press=self.open_trip_summary)
         self.layout.add_widget(btn_summary)
 
@@ -132,14 +133,24 @@ class DashboardScreen(Screen):
         self.manager.current = "login"
 
     def open_trip_summary(self, *_):
-        # Demo data for manual summary
+        """
+        Demo: create a fake trip, let TripManager compute + save summary,
+        then show it on the TripSummaryScreen.
+        """
+        from trip_manager import TripManager
+
         samples = [
             {"speed": 42.0, "brake_events": 0, "harsh_accel": 0, "distance_km": 1.2},
             {"speed": 55.0, "brake_events": 1, "harsh_accel": 0, "distance_km": 2.0},
             {"speed": 61.0, "brake_events": 0, "harsh_accel": 1, "distance_km": 1.6},
         ]
+
+        tm = TripManager("user123")
+        summary = tm.end_trip_and_save(samples)
+
         ts = self.manager.get_screen("trip_summary")
-        ts.set_samples(samples)
+        ts.set_summary(summary)
+
         self.manager.transition.direction = "left"
         self.manager.current = "trip_summary"
 
@@ -157,12 +168,13 @@ class DriverApp(App):
         sm.add_widget(LoginScreen(name="login"))
         sm.add_widget(DashboardScreen(name="dashboard"))
         sm.add_widget(AnalyticsScreen(name="analytics"))
+        sm.add_widget(TripHistoryScreen(name="history"))      # ✅ history screen
         sm.add_widget(TripSummaryScreen(name="trip_summary"))
-        sm.add_widget(TripRecordingScreen(name="trip"))  # Live telemetry screen
+        sm.add_widget(TripRecordingScreen(name="trip"))       # Live telemetry
 
         return sm
 
-    # Called from TripRecordingScreen (optional if you hook sensors)
+    # Optional hooks if you later wire TripRecordingScreen to call these
     def start_trip_recording(self):
         print("DriverApp → Starting sensors...")
         try:
@@ -178,28 +190,29 @@ class DriverApp(App):
             print(f"[Sensors] Error stopping listeners: {e}")
 
     # -----------------------------------------------------
-    # REQUIRED BY TripRecordingScreen → fixes the crash
+    # Called from TripRecordingScreen when a trip ends
     # -----------------------------------------------------
     def receive_trip_summary(self, samples):
         """
         Called from TripRecordingScreen._stop_clicked()
-        after a trip finishes.
+        after a trip finishes (if you choose to use it).
         """
         print("\n=== App Received Raw Samples (from TripRecordingScreen) ===")
         print(samples)
         print("===========================================================\n")
 
-        # Optional: recompute summary for logging
-        summary = compute_summary(samples)
-        print("\n=== FINAL SUMMARY (driver app log) ===")
+        # Compute + save summary via TripManager
+        from trip_manager import TripManager
+        tm = TripManager(self.user_id)
+        summary = tm.end_trip_and_save(samples)
+
+        print("\n=== FINAL SUMMARY (DriverApp) ===")
         print(summary)
-        print("======================================\n")
+        print("=================================\n")
 
-        # Send samples to trip summary screen
         ts = self.root.get_screen("trip_summary")
-        ts.set_samples(samples)
+        ts.set_summary(summary)
 
-        # Navigate to summary screen
         self.root.transition.direction = "left"
         self.root.current = "trip_summary"
 
