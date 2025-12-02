@@ -1,8 +1,8 @@
 {
-  "total_distance_km": 1.48,
-  "avg_speed_kmh": 61.3,
-  "brake_events": 4,
-  "harsh_accel": 2,
-  "safety_score": 66,
-  "timestamp": "2025-12-01 23:52:28"
+  "total_distance_km": 2.33,
+  "avg_speed_kmh": 58.5,
+  "brake_events": 3,
+  "harsh_accel": 3,
+  "safety_score": 64,
+  "timestamp": "2025-12-02 00:21:42"
 }
